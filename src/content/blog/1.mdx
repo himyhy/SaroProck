@@ -14,6 +14,26 @@ draft: false
 
 ### 总起
 
+（[帖子链接](https://www.nodeseek.com/post-407852-1)）
+
+<Warning>
+  **注意**：Cloudflare Workers/Pages 运行在 Edge Runtime（V8 环境），并不具备完整的 Node.js API 支持。
+  由于本项目使用 Astro SSR 并依赖部分 Node API，直接部署到 Cloudflare 可能会导致构建或运行时报错（如 MessageChannel is not defined），
+  页面无法正常渲染甚至返回 404。
+  **建议** 使用 Vercel、Netlify 等具备完整 Node 运行时的平台部署。
+</Warning>
+
+最后，你需要一个公开的 Telegram 频道，在`.env`中添加变量如下：
+
+```dotenv
+TELEGRAM_HOST=t.me
+# 自定义频道或标识符
+CHANNEL=your_channel_name
+```
+
+> 当然，记得添加你的环境变量！
+![数据存储 -> 结构化数据](/photo/build-saroprock/20250730_205111.webp)
+
 搜索了一首歌
 
 import AudioPlayer from "../../components/mdx/AudioPlayer.tsx";
