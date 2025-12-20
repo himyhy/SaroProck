@@ -1,5 +1,3 @@
-import Warning from "../../components/mdx/Warning.astro";
-
 ---
 title: 名称
 description: 描述
@@ -11,6 +9,9 @@ categories:
   - 生活
 draft: false
 ---
+
+import Warning from "../../components/mdx/Warning.astro";
+import AudioPlayer from "../../components/mdx/AudioPlayer.tsx";
 
 ## 关于HY
 
@@ -38,7 +39,7 @@ CHANNEL=your_channel_name
 
 搜索了一首歌
 
-import AudioPlayer from "../../components/mdx/AudioPlayer.tsx";
+
 
 <AudioPlayer 
   src="/music/senior-2/下一个天亮 - 郭静.mp3"
