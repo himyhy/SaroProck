@@ -21,15 +21,30 @@ export async function POST({ request }: APIContext): Promise<Response> {
       };
       const token = signJwt(adminPayload);
 
-      const response = new Response(
+      // 强制手动设置 Set-Cookie，确保兼容性
+      const cookieOptions = [
+        `auth_token=${token}`,
+        "HttpOnly",
+        "Path=/",
+        "Max-Age=2592000",
+        "SameSite=Lax",
+      ];
+      
+      // 只有在确定是正式域名且非本地测试时才加 Secure
+      if (import.meta.env.PROD) {
+        cookieOptions.push("Secure");
+      }
+
+      return new Response(
         JSON.stringify({ success: true, isAdmin: true, message: "管理员验证成功" }),
         {
           status: 200,
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Set-Cookie": cookieOptions.join("; ")
+          },
         },
       );
-      setAuthCookie(response, token);
-      return response;
     }
 
     // 普通访客登录逻辑 (未填密码或密码错误但不是强制要求的用户)
