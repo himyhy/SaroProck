@@ -19,6 +19,13 @@ const TWITTER_HANDLE = "@h_myhy";
 const GITHUB_URL = "https://github.com/himyhy";
 const TELEGRAM_URL = "https://t.me/hy_post";
 
+const navLinks = [
+  { href: "/", label: "首页" },
+  { href: "/blog", label: "博客" },
+  { href: "/friends", label: "朋友" },
+  { href: "/guestbook", label: "留言" },
+];
+
 interface BreadcrumbItem {
   label: string;
   href?: string;
@@ -47,12 +54,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const socialImageURL = new URL(image, Astro.site);
 const currentPath = Astro.url.pathname;
 const mobileDrawerId = "mobile-drawer";
-const navLinks = [
-  { href: "/", label: "首页" },
-  { href: "/blog", label: "博客" },
-  { href: "/friends", label: "朋友" },
-  { href: "/guestbook", label: "留言" },
-];
 
 const navLookup = new Map(navLinks.map((link) => [link.href, link.label]));
 
@@ -156,7 +157,7 @@ const breadcrumbs = providedBreadcrumbs ?? buildDefaultBreadcrumbs();
               ✕
             </button>
           </div>
-          <div class="p-5 space-y-6 overflow-y-auto flex-1 pb-16">
+          <div class="p-5 space-y-6 overflow-y-auto flex-1 pb-16 custom-scrollbar">
             <nav class="flex flex-col gap-2" aria-label="主要导航">
               {navLinks.map((link) => {
                 const isActive =
@@ -168,18 +169,18 @@ const breadcrumbs = providedBreadcrumbs ?? buildDefaultBreadcrumbs();
                     href={link.href}
                     class:list={{
                       "btn btn-ghost justify-start gap-3 rounded-xl": true,
-                      "btn-active btn-primary text-primary-content": isActive,
+                      "btn-active btn-primary text-primary-content shadow-lg shadow-primary/20": isActive,
                     }}
                     aria-current={isActive ? "page" : undefined}
                   >
-                    <i class="ri-arrow-right-s-line" aria-hidden="true" />
+                    <i class={link.href === "/" ? "ri-home-5-line" : link.href === "/blog" ? "ri-article-line" : link.href === "/friends" ? "ri-group-line" : "ri-chat-smile-3-line"} aria-hidden="true" />
                     <span>{link.label}</span>
                   </a>
                 );
               })}
             </nav>
 
-            <div class="divider my-4" />
+            <div class="divider my-4 opacity-50" />
 
             <div class="space-y-4">
               <Sidebar
