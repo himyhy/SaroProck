@@ -14,6 +14,8 @@ function proxyAvatar(url: string | undefined): string {
   if (!url) return "/avatar-placeholder.png";
   try {
     const urlObj = new URL(url);
+    
+    // 处理 Gravatar
     if (
       urlObj.hostname === "www.gravatar.com" ||
       urlObj.hostname === "gravatar.com"
@@ -21,6 +23,12 @@ function proxyAvatar(url: string | undefined): string {
       urlObj.hostname = "cravatar.cn";
       return urlObj.toString();
     }
+    
+    // 处理 Telegram 文件代理
+    if (urlObj.hostname === "api.telegram.org") {
+      return url.replace("https://api.telegram.org/file/", "https://tg-proxy.031003.xyz/file/");
+    }
+
     return url;
   } catch {
     return url;

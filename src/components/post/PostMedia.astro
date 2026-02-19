@@ -23,13 +23,14 @@ if (!media || media.length === 0) return null;
         >
           {item.type === "image" ? (
             <img
-              src={item.url}
+              src={item.url.replace('https://api.telegram.org/file/', 'https://tg-proxy.031003.xyz/file/')}
               alt={item.alt || "Image content"}
               class="max-w-full max-h-full w-auto h-auto object-contain"
+              loading="lazy"
             />
           ) : (
             <video
-              src={item.url}
+              src={item.url.replace('https://api.telegram.org/file/', 'https://tg-proxy.031003.xyz/file/')}
               controls
               preload="metadata"
               playsinline
