@@ -69,116 +69,93 @@ const socialLinks = [
 ];
 ---
 
-<footer class="bg-base-200 text-base-content no-print">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6">
-    <div
-      class="grid sm:grid-cols-12 gap-8 py-8 md:py-12 border-t border-base-content/10"
-    >
-      <div class="sm:col-span-12 lg:col-span-5">
-        <div class="mb-4">
-          <a href="/" class="flex items-center space-x-2 group">
-            <div
-              class="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center"
-            >
-              <i class="ri-leaf-line text-primary-content"></i>
+<footer class="bg-base-200/50 backdrop-blur-sm text-base-content no-print border-t border-base-content/5">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-10 py-12 md:py-16">
+      <!-- Brand Section -->
+      <div class="md:col-span-12 lg:col-span-5 space-y-6">
+        <div>
+          <a href="/" class="inline-flex items-center space-x-3 group">
+            <div class="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 transition-transform group-hover:scale-110">
+              <i class="ri-leaf-line text-primary-content text-xl"></i>
             </div>
-            <span class="text-xl font-bold">HY博客</span>
+            <span class="text-2xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-base-content to-base-content/70">HY博客</span>
           </a>
         </div>
-        <div class="text-sm text-base-content/70">
-          <p>一个孤独的地方，散落着一个人的人生碎片。</p>
-          <p>感谢你的漂流至此，希望这里的文字能为你带来片刻的宁静或思考。</p>
+        
+        <div class="space-y-2 max-w-md">
+          <p class="text-sm font-medium text-base-content/80 leading-relaxed">
+            一个孤独的地方，散落着一个人的人生碎片。
+          </p>
+          <p class="text-xs text-base-content/60 leading-relaxed">
+            感谢你的漂流至此，希望这里的文字能为你带来片刻的宁静或思考。
+          </p>
         </div>
-        <div class="mt-4">
+
+        <div class="flex items-center gap-4">
           <a
             href="https://github.com/EveSunMaple/SaroProck"
             target="_blank"
             rel="noopener noreferrer"
-            class="btn btn-outline btn-sm rounded-full group"
-            aria-label={`Star this project on GitHub, currently has ${starCount} stars`}
+            class="btn btn-sm btn-ghost bg-base-300/50 hover:bg-primary hover:text-primary-content border-none rounded-xl transition-all duration-300 group"
           >
-            <i
-              class="ri-heart-3-line transition-all duration-300 group-hover:ri-heart-3-fill group-hover:text-error"
-            ></i>
+            <i class="ri-heart-3-line group-hover:animate-pulse"></i>
             <span>喜欢本站</span>
-            {
-              formattedStars && (
-                <div class="badge badge-primary rounded-full">
-                  {formattedStars}
-                </div>
-              )
-            }
+            {formattedStars && <span class="opacity-60 ml-1">· {formattedStars}</span>}
           </a>
         </div>
       </div>
 
-      <div class="sm:col-span-6 md:col-span-3 lg:col-span-2">
-        <h6 class="font-semibold text-base-content mb-2">探索</h6>
-        <ul class="text-sm space-y-2">
-          {
-            navLinks.map((link) => (
+      <!-- Links Sections -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:col-span-4 gap-8">
+        <div class="space-y-4">
+          <h6 class="text-xs font-bold uppercase tracking-widest text-base-content/40">探索</h6>
+          <ul class="space-y-3">
+            {navLinks.map((link) => (
               <li>
-                <a
-                  href={link.href}
-                  class="text-base-content/80 hover:text-primary transition-colors duration-200"
-                >
+                <a href={link.href} class="text-sm text-base-content/70 hover:text-primary hover:translate-x-1 inline-block transition-all duration-200">
                   {link.text}
                 </a>
               </li>
-            ))
-          }
-        </ul>
-      </div>
+            ))}
+          </ul>
+        </div>
 
-      <div class="sm:col-span-6 md:col-span-3 lg:col-span-2">
-        <h6 class="font-semibold text-base-content mb-2">关注</h6>
-        <ul class="text-sm space-y-2">
-          {
-            socialLinks.map((link) => (
+        <div class="space-y-4">
+          <h6 class="text-xs font-bold uppercase tracking-widest text-base-content/40">关注</h6>
+          <ul class="space-y-3">
+            {socialLinks.map((link) => (
               <li>
-                <a
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex items-center gap-2 text-base-content/80 hover:text-primary transition-colors duration-200"
-                >
-                  <i class={link.icon} />
+                <a href={link.href} target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 text-sm text-base-content/70 hover:text-primary hover:translate-x-1 transition-all duration-200">
+                  <i class={`${link.icon} text-lg opacity-50`} />
                   <span>{link.text}</span>
                 </a>
               </li>
-            ))
-          }
-        </ul>
+            ))}
+          </ul>
+        </div>
       </div>
 
-      <div class="sm:col-span-6 md:col-span-3 lg:col-span-3">
-        <figure class="w-full max-w-36 aspect-square rounded-xl">
-          <img
-            src="/qrcode.png"
-            alt="二维码"
-            class="w-full h-full object-contain"
-          />
-        </figure>
+      <!-- QR Code Section -->
+      <div class="lg:col-span-3 flex flex-col items-center lg:items-end justify-start">
+        <div class="p-3 bg-base-100 rounded-2xl shadow-xl shadow-base-content/5 border border-base-content/5 rotate-2 hover:rotate-0 transition-transform duration-500">
+          <figure class="w-32 h-32 overflow-hidden rounded-lg bg-white p-1">
+            <img src="/qrcode.png" alt="二维码" class="w-full h-full object-contain" />
+          </figure>
+          <p class="text-[10px] text-center mt-2 font-bold text-base-content/30 uppercase tracking-tighter">Scan to connect</p>
+        </div>
       </div>
     </div>
 
-    <div
-      class="md:flex md:items-center md:justify-between md:flex-wrap gap-2 py-4 border-t border-base-content/10"
-    >
-      <div class="text-sm text-base-content/70">
-        © {new Date().getFullYear()}
-        {author}. All rights reserved.
+    <!-- Bottom Bar -->
+    <div class="py-8 border-t border-base-content/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] font-medium text-base-content/40 uppercase tracking-widest">
+      <div>
+        © {new Date().getFullYear()} {author} · Personal Digital Garden
       </div>
-      <div class="text-sm text-base-content/70">
-        用 Astro 构建，原作者
-        <a
-          href="https://github.com/EveSunMaple/SaroProck"
-          class="underline hover:text-primary transition-colors duration-200"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          EveSunMaple
-        </a>
+      <div class="flex items-center gap-4">
+        <span>Powered by Astro</span>
+        <span class="w-1 h-1 rounded-full bg-base-content/20"></span>
+        <a href="https://github.com/EveSunMaple/SaroProck" class="hover:text-primary transition-colors" target="_blank">Original Theme</a>
       </div>
     </div>
   </div>
