@@ -301,54 +301,45 @@ const breadcrumbs = providedBreadcrumbs ?? buildDefaultBreadcrumbs();
     />
 
     <BackToTop />
-    <script is:inline define:vars={{ mobileDrawerId }}>
-      const drawerId = mobileDrawerId;
-      document.addEventListener("DOMContentLoaded", () => {
-        const mobileDrawer = document.getElementById(drawerId);
-        if (mobileDrawer instanceof HTMLDialogElement) {
-          const panel = mobileDrawer.querySelector(".drawer-panel");
-
-          const closeDrawer = () => {
-            if (!mobileDrawer.open) return;
-            if (!panel) {
-              mobileDrawer.close();
-              return;
-            }
-            panel.classList.add("animate-out");
-            const handleAnimationEnd = () => {
-              panel.classList.remove("animate-out");
-              panel.removeEventListener("animationend", handleAnimationEnd);
-              if (mobileDrawer.open) {
-                mobileDrawer.close();
-              }
+    <script is:inline>
+      // 核心 UI 初始化：即使其他资源加载失败，也要保证侧边栏可用
+      (function() {
+        const initDrawer = () => {
+          const mobileDrawerId = "mobile-drawer";
+          const mobileDrawer = document.getElementById(mobileDrawerId);
+          if (mobileDrawer instanceof HTMLDialogElement) {
+            const panel = mobileDrawer.querySelector(".drawer-panel");
+            const closeDrawer = () => {
+              if (!mobileDrawer.open) return;
+              if (!panel) { mobileDrawer.close(); return; }
+              panel.classList.add("animate-out");
+              const onEnd = () => {
+                panel.classList.remove("animate-out");
+                panel.removeEventListener("animationend", onEnd);
+                if (mobileDrawer.open) mobileDrawer.close();
+              };
+              panel.addEventListener("animationend", onEnd, { once: true });
             };
-            panel.addEventListener("animationend", handleAnimationEnd, { once: true });
-          };
 
-          mobileDrawer.querySelectorAll("[data-close-drawer]").forEach((element) => {
-            element.addEventListener("click", (event) => {
-              event.preventDefault();
-              closeDrawer();
+            mobileDrawer.querySelectorAll("[data-close-drawer]").forEach(el => {
+              el.onclick = (e) => { e.preventDefault(); closeDrawer(); };
             });
-          });
-
-          mobileDrawer.addEventListener("cancel", (event) => {
-            event.preventDefault();
-            closeDrawer();
-          });
-
-          mobileDrawer.addEventListener("close", () => {
-            panel?.classList.remove("animate-out");
-          });
-
-          const observer = new MutationObserver(() => {
-            if (mobileDrawer.open) {
-              panel?.classList.remove("animate-out");
-            }
-          });
-          observer.observe(mobileDrawer, { attributes: true, attributeFilter: ["open"] });
+            mobileDrawer.addEventListener("cancel", (e) => { e.preventDefault(); closeDrawer(); });
+          }
+        };
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initDrawer);
+        } else {
+          initDrawer();
         }
-      });
+      })();
     </script>
+    <style is:inline>
+      /* 强制侧边栏即便在字体加载失败时也有基础显示 */
+      .drawer-panel { font-family: sans-serif; }
+      /* 优化滚动条在国内旧版浏览器的表现 */
+      .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+    </style>
   </body>
 </html>
