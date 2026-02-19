@@ -17,7 +17,7 @@ async function getRepoStars(): Promise<number | null> {
     return cachedData.stars;
   }
   try {
-    const owner = "EveSunMaple";
+    const owner = "himyhy";
     const repo = "SaroProck";
     const token = import.meta.env.GITHUB_TOKEN;
     const response = await fetch(
@@ -94,7 +94,7 @@ const socialLinks = [
 
         <div class="flex items-center gap-4">
           <a
-            href="https://github.com/EveSunMaple/SaroProck"
+            href="https://github.com/himyhy/SaroProck"
             target="_blank"
             rel="noopener noreferrer"
             class="btn btn-sm btn-ghost bg-base-300/50 hover:bg-primary hover:text-primary-content border-none rounded-xl transition-all duration-300 group"
