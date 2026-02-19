@@ -2,7 +2,8 @@ import rss from "@astrojs/rss";
 import { marked } from "marked";
 import { getAllPostsWithShortLinks } from "@/lib/blog";
 
-export const prerender = true;
+// 需要在请求时动态读取当前访问域名，不能预渲染为固定域名文件
+export const prerender = false;
 
 function getRequestOrigin(context: any): string {
   const headers = context?.request?.headers;
