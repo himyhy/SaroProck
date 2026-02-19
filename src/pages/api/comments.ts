@@ -184,10 +184,13 @@ export async function POST(context: APIContext): Promise<Response> {
     comment.set("nickname", finalUser.nickname);
     comment.set("email", finalUser.email);
     // 针对 LeanCloud 字段类型冲突的修复：如果数据库期望 Object，则包装一下
-    if (typeof finalUser.website === 'string' && finalUser.website.startsWith('http')) {
-        comment.set("website", { url: finalUser.website });
+    if (
+      typeof finalUser.website === "string" &&
+      finalUser.website.startsWith("http")
+    ) {
+      comment.set("website", { url: finalUser.website });
     } else {
-        comment.set("website", finalUser.website);
+      comment.set("website", finalUser.website);
     }
     comment.set("avatar", finalUser.avatar);
     comment.set("content", cleanHtml);
@@ -208,13 +211,16 @@ export async function POST(context: APIContext): Promise<Response> {
       JSON.stringify({ success: true, comment: savedComment.toJSON() }),
       { status: 201 },
     );
-    } catch (error: any) {
-      console.error("Error submitting comment from backend:", error);
-      return new Response(
-        JSON.stringify({ success: false, message: `服务器内部错误: ${error.message || '未知错误'}` }),
-        { status: 500 },
-      );
-    }
+  } catch (error: any) {
+    console.error("Error submitting comment from backend:", error);
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: `服务器内部错误: ${error.message || "未知错误"}`,
+      }),
+      { status: 500 },
+    );
+  }
 }
 
 export async function DELETE(context: APIContext): Promise<Response> {

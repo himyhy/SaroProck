@@ -14,7 +14,7 @@ function proxyAvatar(url: string | undefined): string {
   if (!url) return "/avatar-placeholder.png";
   try {
     const urlObj = new URL(url);
-    
+
     // 处理 Gravatar
     if (
       urlObj.hostname === "www.gravatar.com" ||
@@ -23,10 +23,16 @@ function proxyAvatar(url: string | undefined): string {
       urlObj.hostname = "cravatar.cn";
       return urlObj.toString();
     }
-    
+
     // 处理 Telegram 文件代理
-    if (urlObj.hostname.includes("telegram.org") || urlObj.hostname.includes("telesco.pe")) {
-      return url.replace(/https:\/\/(api\.telegram\.org\/file\/|cdn\d+\.cdn-telegram\.org|cdn\d+\.telesco\.pe)/g, "https://tg-proxy.031003.xyz/$&");
+    if (
+      urlObj.hostname.includes("telegram.org") ||
+      urlObj.hostname.includes("telesco.pe")
+    ) {
+      return url.replace(
+        /https:\/\/(api\.telegram\.org\/file\/|cdn\d+\.cdn-telegram\.org|cdn\d+\.telesco\.pe)/g,
+        "https://tg-proxy.031003.xyz/$&",
+      );
     }
 
     return url;

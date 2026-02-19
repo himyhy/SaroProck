@@ -11,8 +11,10 @@ const { media, postId } = Astro.props;
 if (!media || media.length === 0) return null;
 
 // 取第一张图作为预览封面
-const coverImage = (media[0].thumbnail || media[0].url)
-  .replace(/https:\/\/(cdn\d+\.telesco\.pe|cdn\d+\.cdn-telegram\.org)/g, 'https://tg-proxy.031003.xyz/$&');
+const coverImage = (media[0].thumbnail || media[0].url).replace(
+  /https:\/\/(cdn\d+\.telesco\.pe|cdn\d+\.cdn-telegram\.org)/g,
+  "https://tg-proxy.031003.xyz/$&",
+);
 ---
 
 <div class="media-preview-card not-prose mt-3">

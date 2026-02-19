@@ -1,7 +1,7 @@
 // src/pages/api/login.ts
 import type { APIContext } from "astro";
 import { ADMIN_USER } from "@/config";
-import { setAuthCookie, signJwt } from "@/lib/auth";
+import { signJwt } from "@/lib/auth";
 
 export async function POST({ request }: APIContext): Promise<Response> {
   try {
@@ -29,19 +29,23 @@ export async function POST({ request }: APIContext): Promise<Response> {
         "Max-Age=2592000",
         "SameSite=Lax",
       ];
-      
+
       // 只有在确定是正式域名且非本地测试时才加 Secure
       if (import.meta.env.PROD) {
         cookieOptions.push("Secure");
       }
 
       return new Response(
-        JSON.stringify({ success: true, isAdmin: true, message: "管理员验证成功" }),
+        JSON.stringify({
+          success: true,
+          isAdmin: true,
+          message: "管理员验证成功",
+        }),
         {
           status: 200,
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
-            "Set-Cookie": cookieOptions.join("; ")
+            "Set-Cookie": cookieOptions.join("; "),
           },
         },
       );
