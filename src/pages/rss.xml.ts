@@ -4,10 +4,23 @@ import { getAllPostsWithShortLinks } from "@/lib/blog";
 
 export const prerender = true;
 
+function getRequestOrigin(context: any): string {
+  const headers = context?.request?.headers;
+  const xfHost = headers?.get?.("x-forwarded-host");
+  const xfProto = headers?.get?.("x-forwarded-proto");
+
+  if (xfHost) {
+    const proto = xfProto || "https";
+    return `${proto}://${xfHost}`;
+  }
+
+  return context.url.origin;
+}
+
 export async function GET(context: any) {
-  // 以当前请求的 origin 为准生成链接：这样在镜像域名/多域名访问 rss.xml 时，点开文章仍留在当前域名
-  // 不使用 context.site（它通常来自 astro.config 的 site，会导致跨域跳转）
-  const siteUrl = new URL(context.url.origin);
+  // 在 Vercel/反代环境下，context.url.origin 可能不是用户访问的域名；优先使用 x-forwarded-* 还原真实 origin
+  // 这样在镜像域名/多域名访问 rss.xml 时，点开文章仍留在当前域名
+  const siteUrl = new URL(getRequestOrigin(context));
 
   const posts = await getAllPostsWithShortLinks(siteUrl);
 
