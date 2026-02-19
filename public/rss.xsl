@@ -8,7 +8,7 @@
   <html>
     <head>
       <title><xsl:value-of select="/rss/channel/title"/></title>
-      <link rel="stylesheet" type="text/css" href="/rss.css" />
+      <link rel="stylesheet" type="text/css" href="/rss.css?v=20260219" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     </head>
     <body>
