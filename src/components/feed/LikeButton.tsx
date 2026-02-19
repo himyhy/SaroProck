@@ -9,10 +9,9 @@ interface Props {
 const LikeButton: React.FC<Props> = ({ postId }) => {
   const [likeCount, setLikeCount] = useState<number>(0);
   const [hasLiked, setHasLiked] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const storageKey = "liked_feed_posts"; // 使用独立的 key
+  const storageKey = "liked_feed_posts";
 
   const formatLargeCount = (count: number) => {
     if (count < 1000) return count.toString();
@@ -21,47 +20,29 @@ const LikeButton: React.FC<Props> = ({ postId }) => {
     return `${Math.floor(k)}k`;
   };
 
-  // 挂载时仅从本地存储恢复是否点赞，不请求后端，减少首页请求次数
   useEffect(() => {
-    let isMounted = true;
-    if (typeof window === "undefined") {
-      setIsLoading(false);
-      return () => {
-        isMounted = false;
-      };
-    }
+    if (typeof window === "undefined") return;
 
     try {
       const likedPosts = JSON.parse(localStorage.getItem(storageKey) || "[]");
-      if (
-        isMounted &&
-        Array.isArray(likedPosts) &&
-        likedPosts.includes(postId)
-      ) {
+      if (Array.isArray(likedPosts) && likedPosts.includes(postId)) {
         setHasLiked(true);
       }
     } catch (error) {
       console.error("Failed to restore like state from localStorage", error);
-    } finally {
-      if (isMounted) setIsLoading(false);
     }
-
-    return () => {
-      isMounted = false;
-    };
   }, [postId]);
 
-  const handleClick = async () => {
-    if (isSubmitting || isLoading) return;
+  const handleClick = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
 
     setIsSubmitting(true);
     const newLikedState = !hasLiked;
 
-    // 1. 乐观更新 UI
     setHasLiked(newLikedState);
     setLikeCount((prev) => (newLikedState ? prev + 1 : Math.max(0, prev - 1)));
 
-    // 2. 更新本地存储
     const likedPosts = new Set<string>(
       JSON.parse(localStorage.getItem(storageKey) || "[]"),
     );
@@ -69,7 +50,6 @@ const LikeButton: React.FC<Props> = ({ postId }) => {
     else likedPosts.delete(postId);
     localStorage.setItem(storageKey, JSON.stringify(Array.from(likedPosts)));
 
-    // 3. 调用后端 API
     try {
       const response = await fetch("/api/like", {
         method: "POST",
@@ -79,12 +59,10 @@ const LikeButton: React.FC<Props> = ({ postId }) => {
 
       if (!response.ok) throw new Error("API request failed");
 
-      // 可选：使用后端返回的权威数据进行最终确认
       const data = await response.json();
       if (data.success) setLikeCount(data.likeCount);
     } catch (error) {
       console.error("Failed to submit like:", error);
-      // 回滚 UI
       setHasLiked(!newLikedState);
       setLikeCount((prev) => (newLikedState ? prev - 1 : prev + 1));
     } finally {
@@ -92,23 +70,15 @@ const LikeButton: React.FC<Props> = ({ postId }) => {
     }
   };
 
-  const buttonClasses = `btn btn-ghost btn-xs rounded-lg gap-1 text-base-content/60 ${hasLiked ? "text-error" : ""}`;
-  const isDisabled = isLoading || isSubmitting;
-
-  if (isLoading) {
-    return (
-      <button type="button" className={buttonClasses}>
-        <span className="loading loading-spinner loading-xs" />
-      </button>
-    );
-  }
+  const classes = `btn btn-ghost btn-xs rounded-lg gap-1 text-base-content/60 ${hasLiked ? "text-error" : ""}`;
 
   return (
-    <button
-      type="button"
-      className={buttonClasses}
+    <a
+      href={`/post/${postId}`}
+      className={classes}
       onClick={handleClick}
-      disabled={isDisabled}
+      aria-busy={isSubmitting}
+      aria-disabled={isSubmitting}
     >
       {isSubmitting ? (
         <span className="loading loading-spinner loading-xs" />
@@ -128,7 +98,7 @@ const LikeButton: React.FC<Props> = ({ postId }) => {
         ) : (
           <span className="opacity-70">· {formatLargeCount(likeCount)}</span>
         ))}
-    </button>
+    </a>
   );
 };
 

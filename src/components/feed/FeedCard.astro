@@ -99,14 +99,14 @@ const { post, isLastItem = false } = Astro.props;
             </div>
           </div>
           <div class="relative z-10 flex items-center space-x-1">
-            <LikeButton postId={post.id} client:visible />
+            <LikeButton postId={post.id} client:idle />
           </div>
         </footer>
       </div>
 
       <div class="border-t border-base-content/5 px-4 pt-2 pb-4">
         <InlineComments
-          client:only="react"
+          client:idle
           identifier={post.id}
           commentType="telegram"
         />

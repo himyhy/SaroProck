@@ -121,6 +121,14 @@ SaroProck 是 **静态博客 + 动态博客** 的结合体，内置评论、搜�
 
 ## 🔧 环境变量
 
+### 快速配置
+
+```bash
+cp .env.example .env
+```
+
+然后至少把 `.env` 里的 `CHANNEL` 改成你自己的 Telegram 频道名（不要带 `@`，例如 `my_channel`）。
+
 ```dotenv
 # LeanCloud 应用凭证 (国际版或国内版)
 # 请前往 LeanCloud 控制台 > 设置 > 应用凭证 获取
