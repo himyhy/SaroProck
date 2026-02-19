@@ -132,12 +132,12 @@ const breadcrumbs = providedBreadcrumbs ?? buildDefaultBreadcrumbs();
       mobileDrawerId={mobileDrawerId}
     />
 
-    <dialog id={mobileDrawerId} class="modal" aria-label="移动端导航">
-      <div class="flex w-screen h-screen justify-start">
+    <dialog id={mobileDrawerId} class="modal p-0" aria-label="移动端导航">
+      <div class="flex w-screen h-[100dvh] justify-start">
         <div
           class="w-80 max-w-[80vw] sm:max-w-sm h-full bg-base-100 shadow-2xl border-r border-base-content/10 flex flex-col drawer-panel"
         >
-          <div class="bg-base-200/60 backdrop-blur-sm border-b border-base-content/10 p-5 flex items-center justify-between">
+          <div class="bg-base-200/60 backdrop-blur-sm border-b border-base-content/10 p-5 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
               <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary text-primary-content">
                 <i class="ri-leaf-line" aria-hidden="true"></i>
@@ -156,7 +156,7 @@ const breadcrumbs = providedBreadcrumbs ?? buildDefaultBreadcrumbs();
               ✕
             </button>
           </div>
-          <div class="p-5 space-y-6 overflow-y-auto flex-1 h-full min-h-0">
+          <div class="p-5 space-y-6 overflow-y-auto flex-1 pb-16">
             <nav class="flex flex-col gap-2" aria-label="主要导航">
               {navLinks.map((link) => {
                 const isActive =
