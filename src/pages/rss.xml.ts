@@ -5,8 +5,9 @@ import { getAllPostsWithShortLinks } from "@/lib/blog";
 export const prerender = true;
 
 export async function GET(context: any) {
-  // 动态获取当前请求的站点根路径，防止因配置中的 site 导致链接错误
-  const siteUrl = context.site || new URL(context.url.origin);
+  // 以当前请求的 origin 为准生成链接：这样在镜像域名/多域名访问 rss.xml 时，点开文章仍留在当前域名
+  // 不使用 context.site（它通常来自 astro.config 的 site，会导致跨域跳转）
+  const siteUrl = new URL(context.url.origin);
 
   const posts = await getAllPostsWithShortLinks(siteUrl);
 
@@ -36,7 +37,8 @@ export async function GET(context: any) {
       return {
         title,
         description,
-        link: post.shortLink || post.longUrl,
+        // RSS 阅读器/浏览器 XSLT 里点击文章时应跳转到站点正文页；这里使用当前请求域名生成的绝对链接
+        link: post.longUrl,
         guid: post.longUrl,
         content,
         pubDate: new Date(pubDate),
