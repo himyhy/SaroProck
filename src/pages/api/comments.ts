@@ -146,10 +146,10 @@ export async function POST(context: APIContext): Promise<Response> {
     if (adminUser) {
       // 如果是管理员 (通过cookie验证)
       finalUser = {
-        nickname: adminUser.nickname,
-        email: adminUser.email,
-        website: adminUser.website,
-        avatar: adminUser.avatar,
+        nickname: adminUser.nickname || "博主",
+        email: adminUser.email || "",
+        website: adminUser.website || "",
+        avatar: adminUser.avatar || "",
         isAdmin: true,
       };
     } else {
