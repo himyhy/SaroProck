@@ -6,6 +6,13 @@ const { post, author } = Astro.props as {
   author: string;
 };
 const { tags, categories } = post.data;
+
+const originUrl = Astro.url?.origin || Astro.site?.origin || Astro.site?.href || "/";
+const displayHost =
+  Astro.url?.hostname ||
+  Astro.site?.hostname ||
+  originUrl.replace(/^https?:\/\//, "").replace(/\/$/, "") ||
+  "本站";
 ---
 
 <footer class="mt-12 pt-8 border-t border-base-content/10">
@@ -57,8 +64,8 @@ const { tags, categories } = post.data;
     <div class="relative z-10">
       <p>
         <strong>版权声明：</strong>本文作者为 <strong>{author}</strong
-        >，首发于<a href={Astro.url.href} class="link link-primary mx-1"
-          >{Astro.site?.hostname}</a
+        >，首发于<a href={originUrl} class="link link-primary mx-1"
+          >{displayHost}</a
         >。
       </p>
       <p class="mt-2 flex items-start gap-2">
