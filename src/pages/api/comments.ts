@@ -203,13 +203,13 @@ export async function POST(context: APIContext): Promise<Response> {
       JSON.stringify({ success: true, comment: savedComment.toJSON() }),
       { status: 201 },
     );
-  } catch (error) {
-    console.error("Error submitting comment from backend:", error);
-    return new Response(
-      JSON.stringify({ success: false, message: "服务器内部错误" }),
-      { status: 500 },
-    );
-  }
+    } catch (error: any) {
+      console.error("Error submitting comment from backend:", error);
+      return new Response(
+        JSON.stringify({ success: false, message: `服务器内部错误: ${error.message || '未知错误'}` }),
+        { status: 500 },
+      );
+    }
 }
 
 export async function DELETE(context: APIContext): Promise<Response> {
