@@ -7,7 +7,8 @@ const { post, author } = Astro.props as {
 };
 const { tags, categories } = post.data;
 
-const originUrl = Astro.url?.origin || Astro.site?.origin || Astro.site?.href || "/";
+const originUrl =
+  Astro.url?.origin || Astro.site?.origin || Astro.site?.href || "/";
 const displayHost =
   Astro.url?.hostname ||
   Astro.site?.hostname ||
@@ -64,8 +65,14 @@ const displayHost =
     <div class="relative z-10">
       <p>
         <strong>版权声明：</strong>本文作者为 <strong>{author}</strong
-        >，首发于<a href={originUrl} class="link link-primary mx-1"
-          >{displayHost}</a
+        >，首发于<a
+          id="post-origin"
+          href={originUrl}
+          class="link link-primary mx-1"
+          data-fallback-host={displayHost}
+        >
+          {displayHost}
+        </a
         >。
       </p>
       <p class="mt-2 flex items-start gap-2">
@@ -81,4 +88,13 @@ const displayHost =
       </p>
     </div>
   </div>
+
+  <script>
+    // In static builds `Astro.site` is fixed. Use the real runtime domain in the browser.
+    const originLink = document.getElementById("post-origin");
+    if (originLink && window?.location) {
+      originLink.setAttribute("href", window.location.origin);
+      originLink.textContent = window.location.host || originLink.dataset.fallbackHost || "本站";
+    }
+  </script>
 </footer>
