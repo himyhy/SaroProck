@@ -5,13 +5,10 @@ import { getAllPostsWithShortLinks } from "@/lib/blog";
 export const prerender = true;
 
 export async function GET(context: any) {
-  if (!context.site) {
-    throw new Error(
-      "A `site` property is required in your astro.config.mjs for this RSS feed to work.",
-    );
-  }
+  // 动态获取当前请求的站点根路径，防止因配置中的 site 导致链接错误
+  const siteUrl = context.site || new URL(context.url.origin);
 
-  const posts = await getAllPostsWithShortLinks(context.site);
+  const posts = await getAllPostsWithShortLinks(siteUrl);
 
   function replacePath(content: string, siteUrl: string): string {
     return content.replace(/(src|href)="([^"]+)"/g, (match, attr, value) => {
@@ -33,7 +30,7 @@ export async function GET(context: any) {
       } = post;
 
       const content = post.body
-        ? replacePath(await marked.parse(post.body), context.site)
+        ? replacePath(await marked.parse(post.body), siteUrl.toString())
         : "No content available.";
 
       return {
@@ -51,16 +48,16 @@ export async function GET(context: any) {
   return rss({
     title: "HY博客",
     description: "一个孤独的地方，散落着一个人的人生碎片",
-    site: context.site.toString(),
+    site: siteUrl.toString(),
     items,
     stylesheet: "/rss.xsl",
     customData: `
       <language>zh-CN</language>
-      <atom:link href="${new URL(context.url.pathname, context.site)}" rel="self" type="application/rss+xml" />
+      <atom:link href="${new URL(context.url.pathname, siteUrl)}" rel="self" type="application/rss+xml" />
       <image>
-        <url>${new URL("/favicon.png", context.site).toString()}</url>
+        <url>${new URL("/favicon.png", siteUrl).toString()}</url>
         <title>HY博客</title>
-        <link>${context.site}</link>
+        <link>${siteUrl}</link>
       </image>
     `,
     xmlns: {
