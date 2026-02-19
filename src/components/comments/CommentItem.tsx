@@ -27,8 +27,7 @@ function proxyAvatar(url: string | undefined): string {
     // 处理 Telegram 文件代理
     if (urlObj.hostname.includes("telegram.org")) {
       return url.replace("https://api.telegram.org/file/", "https://tg-proxy.031003.xyz/file/")
-                .replace("https://cdn1.cdn-telegram.org", "https://tg-proxy.031003.xyz")
-                .replace("https://cdn4.cdn-telegram.org", "https://tg-proxy.031003.xyz");
+                .replace(/https:\/\/cdn\d+\.cdn-telegram\.org/g, "https://tg-proxy.031003.xyz");
     }
 
     return url;
