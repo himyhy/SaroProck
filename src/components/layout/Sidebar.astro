@@ -164,17 +164,17 @@ const EMAIL_ADDRESS = "myhywo@gmail.com";
               联系方式
             </h3>
             <div class="space-y-2">
-              <div class="flex items-center justify-between bg-base-100 rounded-lg p-3 border border-base-content/10">
+              <div class="flex items-center justify-between bg-base-100 rounded-lg p-3 border border-base-content/10 transition hover:border-primary/60 hover:bg-base-100/80">
                 <span class="flex items-center gap-2 text-sm">
-                  <i class="ri-qq-line" /> QQ 
+                  <i class="ri-mail-line" /> 邮箱
                 </span>
-                <span class="font-mono text-sm text-base-content/80">
-                  {QQ_GROUP_NUMBER}
+                <span class="font-mono text-xs text-base-content/80">
+                  {EMAIL_ADDRESS}
                 </span>
               </div>
               <a
                 href={`mailto:${EMAIL_ADDRESS}`}
-                class="btn w-full bg-base-100 rounded-lg p-3 border border-base-content/10"
+                class="btn w-full bg-base-100 rounded-lg p-3 border border-base-content/10 hover:bg-primary hover:text-primary-content transition-all"
               >
                 <i class="ri-mail-send-line" />
                 发送邮件
