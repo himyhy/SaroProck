@@ -23,14 +23,14 @@ if (!media || media.length === 0) return null;
         >
           {item.type === "image" ? (
             <img
-              src={item.url.replace(/https:\/\/cdn\d+\.telesco\.pe/g, 'https://tg-proxy.031003.xyz').replace(/https:\/\/cdn\d+\.cdn-telegram\.org/g, 'https://tg-proxy.031003.xyz')}
+              src={item.url.replace(/https:\/\/(cdn\d+\.telesco\.pe|cdn\d+\.cdn-telegram\.org)/g, 'https://tg-proxy.031003.xyz/$&')}
               alt={item.alt || "Image content"}
               class="max-w-full max-h-full w-auto h-auto object-contain"
               loading="lazy"
             />
           ) : (
             <video
-              src={item.url.replace(/https:\/\/cdn\d+\.telesco\.pe/g, 'https://tg-proxy.031003.xyz').replace(/https:\/\/cdn\d+\.cdn-telegram\.org/g, 'https://tg-proxy.031003.xyz')}
+              src={item.url.replace(/https:\/\/(cdn\d+\.telesco\.pe|cdn\d+\.cdn-telegram\.org)/g, 'https://tg-proxy.031003.xyz/$&')}
               controls
               preload="metadata"
               playsinline
