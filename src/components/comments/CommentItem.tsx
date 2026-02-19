@@ -25,9 +25,10 @@ function proxyAvatar(url: string | undefined): string {
     }
     
     // 处理 Telegram 文件代理
-    if (urlObj.hostname.includes("telegram.org")) {
+    if (urlObj.hostname.includes("telegram.org") || urlObj.hostname.includes("telesco.pe")) {
       return url.replace("https://api.telegram.org/file/", "https://tg-proxy.031003.xyz/file/")
-                .replace(/https:\/\/cdn\d+\.cdn-telegram\.org/g, "https://tg-proxy.031003.xyz");
+                .replace(/https:\/\/cdn\d+\.cdn-telegram\.org/g, "https://tg-proxy.031003.xyz")
+                .replace(/https:\/\/cdn\d+\.telesco\.pe/g, "https://tg-proxy.031003.xyz");
     }
 
     return url;
