@@ -16,7 +16,7 @@
         <header class="rss-header">
           <div class="header-content">
             <div class="header-text">
-              <h1><a href="https://bcd.moe"><xsl:value-of select="/rss/channel/title"/></a></h1>
+              <h1><a href="/"><xsl:value-of select="/rss/channel/title"/></a></h1>
               <p><xsl:value-of select="/rss/channel/description"/></p>
             </div>
             <div class="subscribe-area">
