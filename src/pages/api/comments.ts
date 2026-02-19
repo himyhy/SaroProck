@@ -183,7 +183,12 @@ export async function POST(context: APIContext): Promise<Response> {
 
     comment.set("nickname", finalUser.nickname);
     comment.set("email", finalUser.email);
-    comment.set("website", finalUser.website);
+    // 针对 LeanCloud 字段类型冲突的修复：如果数据库期望 Object，则包装一下
+    if (typeof finalUser.website === 'string' && finalUser.website.startsWith('http')) {
+        comment.set("website", { url: finalUser.website });
+    } else {
+        comment.set("website", finalUser.website);
+    }
     comment.set("avatar", finalUser.avatar);
     comment.set("content", cleanHtml);
     comment.set(commentType === "telegram" ? "postId" : "slug", identifier);
