@@ -14,6 +14,19 @@ function getEnv(Astro: any, name: string): string | undefined {
   return import.meta.env[name] ?? Astro.locals?.runtime?.env?.[name];
 }
 
+function requireChannel(Astro: AstroGlobal): string {
+  const channel = getEnv(Astro, "CHANNEL")?.trim();
+
+  if (!channel) {
+    throw new Error(
+      "CHANNEL environment variable is not set. Please copy .env.example to .env and set CHANNEL=<your_telegram_channel_name>.",
+    );
+  }
+
+  // 容错：用户可能会把频道名写成 @channel，这里自动纠正为 channel
+  return channel.replace(/^@+/, "");
+}
+
 /**
  * 从 Telegram 获取原始 HTML
  * @param Astro Astro 全局对象
@@ -32,11 +45,7 @@ export async function fetchTelegramHtml(
   }
 
   const host = getEnv(Astro, "TELEGRAM_HOST") ?? "t.me";
-  const channel = getEnv(Astro, "CHANNEL");
-
-  if (!channel) {
-    throw new Error("CHANNEL environment variable is not set.");
-  }
+  const channel = requireChannel(Astro);
 
   const url = id
     ? `https://${host}/${channel}/${id}?embed=1&mode=tme`
