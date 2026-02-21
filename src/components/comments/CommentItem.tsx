@@ -85,7 +85,7 @@ const CommentItemComponent: React.FC<Props> = ({
         <header className="flex items-start justify-between p-4">
           <div className="flex items-center gap-3 min-w-0">
             <a
-              href={comment.website || "#"}
+              href={typeof comment.website === "string" ? comment.website : "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="avatar w-10 h-10 shrink-0"
@@ -240,7 +240,7 @@ const CommentItemComponent: React.FC<Props> = ({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              {comment.website ? (
+              {comment.website && typeof comment.website === "string" ? (
                 <a
                   href={comment.website}
                   className="font-semibold text-primary hover:underline truncate"
