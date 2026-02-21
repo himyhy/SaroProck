@@ -48,6 +48,24 @@ interface Props {
   displayMode: "full" | "compact" | "guestbook";
 }
 
+function getWebsiteHref(website: unknown): string | null {
+  if (typeof website === "string") {
+    return website.trim() ? website : null;
+  }
+
+  if (
+    website &&
+    typeof website === "object" &&
+    "url" in website &&
+    typeof website.url === "string" &&
+    website.url.trim()
+  ) {
+    return website.url;
+  }
+
+  return null;
+}
+
 // 重命名为 CommentItemComponent 以便在文件内部递归调用
 const CommentItemComponent: React.FC<Props> = ({
   comment,
@@ -56,6 +74,7 @@ const CommentItemComponent: React.FC<Props> = ({
   displayMode,
 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
+  const websiteHref = getWebsiteHref(comment.website);
 
   const SENSITIVE_USERS_LOWER = SENSITIVE_USERS.map((u) => u.toLowerCase());
   const userNicknameLower = (comment.nickname || "").toLowerCase();
@@ -84,9 +103,9 @@ const CommentItemComponent: React.FC<Props> = ({
       <div className="guestbook-card flex flex-col h-full rounded-2xl shadow-sm border border-base-content/10 bg-base-100/60 transition-all duration-300 hover:shadow-lg backdrop-blur-sm">
         <header className="flex items-start justify-between p-4">
           <div className="flex items-center gap-3 min-w-0">
-            {comment.website && typeof comment.website === "string" ? (
+            {websiteHref ? (
               <a
-                href={comment.website}
+                href={websiteHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="avatar w-10 h-10 shrink-0"
@@ -254,9 +273,9 @@ const CommentItemComponent: React.FC<Props> = ({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              {comment.website && typeof comment.website === "string" ? (
+              {websiteHref ? (
                 <a
-                  href={comment.website}
+                  href={websiteHref}
                   className="font-semibold text-primary hover:underline truncate"
                   target="_blank"
                   rel="noopener noreferrer"
