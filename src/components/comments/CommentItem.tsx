@@ -84,16 +84,30 @@ const CommentItemComponent: React.FC<Props> = ({
       <div className="guestbook-card flex flex-col h-full rounded-2xl shadow-sm border border-base-content/10 bg-base-100/60 transition-all duration-300 hover:shadow-lg backdrop-blur-sm">
         <header className="flex items-start justify-between p-4">
           <div className="flex items-center gap-3 min-w-0">
-            <a
-              href={typeof comment.website === "string" ? comment.website : "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="avatar w-10 h-10 shrink-0"
-            >
-              <div className="rounded-full ring-2 ring-base-content/5">
-                <img src={proxyAvatar(comment.avatar)} alt={comment.nickname} />
+            {comment.website && typeof comment.website === "string" ? (
+              <a
+                href={comment.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="avatar w-10 h-10 shrink-0"
+              >
+                <div className="rounded-full ring-2 ring-base-content/5">
+                  <img
+                    src={proxyAvatar(comment.avatar)}
+                    alt={comment.nickname}
+                  />
+                </div>
+              </a>
+            ) : (
+              <div className="avatar w-10 h-10 shrink-0">
+                <div className="rounded-full ring-2 ring-base-content/5">
+                  <img
+                    src={proxyAvatar(comment.avatar)}
+                    alt={comment.nickname}
+                  />
+                </div>
               </div>
-            </a>
+            )}
             <div className="min-w-0">
               <p className="font-semibold truncate">{comment.nickname}</p>
               {comment.isAdmin ? (
