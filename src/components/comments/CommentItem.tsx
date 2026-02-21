@@ -48,19 +48,36 @@ interface Props {
   displayMode: "full" | "compact" | "guestbook";
 }
 
+function normalizeWebsiteUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (/^javascript:/i.test(trimmed)) return null;
+
+  const withProtocol = /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(withProtocol);
+    if (!["http:", "https:"].includes(parsed.protocol)) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 function getWebsiteHref(website: unknown): string | null {
   if (typeof website === "string") {
-    return website.trim() ? website : null;
+    return normalizeWebsiteUrl(website);
   }
 
   if (
     website &&
     typeof website === "object" &&
     "url" in website &&
-    typeof website.url === "string" &&
-    website.url.trim()
+    typeof website.url === "string"
   ) {
-    return website.url;
+    return normalizeWebsiteUrl(website.url);
   }
 
   return null;
@@ -266,11 +283,24 @@ const CommentItemComponent: React.FC<Props> = ({
           <div className="absolute -left-4 top-2 w-4 h-4 border-l-2 border-b-2 border-base-content/10 rounded-bl-lg" />
         )}
         <div className="flex gap-4">
-          <div className="avatar flex-shrink-0">
-            <div className="w-10 h-10 rounded-full">
-              <img src={proxyAvatar(comment.avatar)} alt={comment.nickname} />
+          {websiteHref ? (
+            <a
+              href={websiteHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="avatar flex-shrink-0"
+            >
+              <div className="w-10 h-10 rounded-full">
+                <img src={proxyAvatar(comment.avatar)} alt={comment.nickname} />
+              </div>
+            </a>
+          ) : (
+            <div className="avatar flex-shrink-0">
+              <div className="w-10 h-10 rounded-full">
+                <img src={proxyAvatar(comment.avatar)} alt={comment.nickname} />
+              </div>
             </div>
-          </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               {websiteHref ? (
