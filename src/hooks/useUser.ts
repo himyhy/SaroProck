@@ -11,6 +11,11 @@ export interface User {
 
 const GUEST_USER_STORAGE_KEY = "guest_user";
 
+const buildGuestAvatar = (email: string) => {
+  const emailHash = md5(email.trim().toLowerCase());
+  return `https://cravatar.cn/avatar/${emailHash}?d=identicon&s=160`;
+};
+
 export const useUser = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -36,8 +41,18 @@ export const useUser = () => {
         // 如果不是管理员，检查本地访客信息
         const storedGuest = localStorage.getItem(GUEST_USER_STORAGE_KEY);
         if (storedGuest) {
-          const guestUser = JSON.parse(storedGuest);
-          setUser(guestUser);
+          const guestUser = JSON.parse(storedGuest) as User;
+          const normalizedGuest: User = {
+            ...guestUser,
+            avatar: buildGuestAvatar(guestUser.email),
+            isAdmin: false,
+          };
+
+          localStorage.setItem(
+            GUEST_USER_STORAGE_KEY,
+            JSON.stringify(normalizedGuest),
+          );
+          setUser(normalizedGuest);
           setIsLoggedIn(true); // 访客也视为“已登录”状态
         } else {
           setUser(null);
@@ -63,8 +78,7 @@ export const useUser = () => {
     email: string;
     website?: string;
   }) => {
-    const emailHash = md5(userInfo.email.trim().toLowerCase());
-    const avatar = `https://cravatar.cn/avatar/${emailHash}?d=mp`;
+    const avatar = buildGuestAvatar(userInfo.email);
 
     const guestData: User = {
       ...userInfo,

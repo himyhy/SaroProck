@@ -3,7 +3,7 @@ import SearchBar from "@components/widgets/SearchBar";
 
 export interface Props {
   siteTitle: string;
-  navLinks: { href: string; label: string }[];
+  navLinks: { href: string; label: string; icon?: string }[];
   currentPath: string;
   mobileDrawerId: string;
 }
@@ -56,7 +56,7 @@ const { siteTitle, navLinks = [], currentPath, mobileDrawerId } = Astro.props;
                 }}
                 aria-current={isActive ? "page" : undefined}
               >
-                <i class={link.icon} aria-hidden="true"></i>
+                {link.icon && <i class={link.icon} aria-hidden="true"></i>}
                 <span>{link.label}</span>
                 {isActive && (
                   <span class="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-secondary rounded-full"></span>

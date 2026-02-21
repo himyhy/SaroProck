@@ -48,6 +48,41 @@ interface Props {
   displayMode: "full" | "compact" | "guestbook";
 }
 
+function normalizeWebsiteUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (/^javascript:/i.test(trimmed)) return null;
+
+  const withProtocol = /^[a-zA-Z][a-zA-Z\d+.-]*:\/\//.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
+  try {
+    const parsed = new URL(withProtocol);
+    if (!["http:", "https:"].includes(parsed.protocol)) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function getWebsiteHref(website: unknown): string | null {
+  if (typeof website === "string") {
+    return normalizeWebsiteUrl(website);
+  }
+
+  if (
+    website &&
+    typeof website === "object" &&
+    "url" in website &&
+    typeof website.url === "string"
+  ) {
+    return normalizeWebsiteUrl(website.url);
+  }
+
+  return null;
+}
+
 // 重命名为 CommentItemComponent 以便在文件内部递归调用
 const CommentItemComponent: React.FC<Props> = ({
   comment,
@@ -56,6 +91,7 @@ const CommentItemComponent: React.FC<Props> = ({
   displayMode,
 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
+  const websiteHref = getWebsiteHref(comment.website);
 
   const SENSITIVE_USERS_LOWER = SENSITIVE_USERS.map((u) => u.toLowerCase());
   const userNicknameLower = (comment.nickname || "").toLowerCase();
@@ -84,9 +120,9 @@ const CommentItemComponent: React.FC<Props> = ({
       <div className="guestbook-card flex flex-col h-full rounded-2xl shadow-sm border border-base-content/10 bg-base-100/60 transition-all duration-300 hover:shadow-lg backdrop-blur-sm">
         <header className="flex items-start justify-between p-4">
           <div className="flex items-center gap-3 min-w-0">
-            {comment.website && typeof comment.website === "string" ? (
+            {websiteHref ? (
               <a
-                href={comment.website}
+                href={websiteHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="avatar w-10 h-10 shrink-0"
@@ -247,16 +283,29 @@ const CommentItemComponent: React.FC<Props> = ({
           <div className="absolute -left-4 top-2 w-4 h-4 border-l-2 border-b-2 border-base-content/10 rounded-bl-lg" />
         )}
         <div className="flex gap-4">
-          <div className="avatar flex-shrink-0">
-            <div className="w-10 h-10 rounded-full">
-              <img src={proxyAvatar(comment.avatar)} alt={comment.nickname} />
+          {websiteHref ? (
+            <a
+              href={websiteHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="avatar flex-shrink-0"
+            >
+              <div className="w-10 h-10 rounded-full">
+                <img src={proxyAvatar(comment.avatar)} alt={comment.nickname} />
+              </div>
+            </a>
+          ) : (
+            <div className="avatar flex-shrink-0">
+              <div className="w-10 h-10 rounded-full">
+                <img src={proxyAvatar(comment.avatar)} alt={comment.nickname} />
+              </div>
             </div>
-          </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              {comment.website && typeof comment.website === "string" ? (
+              {websiteHref ? (
                 <a
-                  href={comment.website}
+                  href={websiteHref}
                   className="font-semibold text-primary hover:underline truncate"
                   target="_blank"
                   rel="noopener noreferrer"
