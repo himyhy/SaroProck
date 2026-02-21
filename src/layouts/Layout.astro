@@ -35,18 +35,22 @@ export interface Props {
   title: string;
   description?: string;
   image?: string;
+  keywords?: string[];
   headings?: MarkdownHeading[];
   showHero?: boolean;
   breadcrumbs?: BreadcrumbItem[] | null;
+  structuredData?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
   title,
   description = SITE_DESCRIPTION,
   image = OG_IMAGE_DEFAULT,
+  keywords = [],
   headings = [],
   showHero = title === "首页",
   breadcrumbs: providedBreadcrumbs,
+  structuredData,
 } = Astro.props;
 
 const finalTitle = title === "首页" ? SITE_TITLE : `${title} | ${SITE_TITLE}`;
@@ -83,6 +87,33 @@ const buildDefaultBreadcrumbs = () => {
 };
 
 const breadcrumbs = providedBreadcrumbs ?? buildDefaultBreadcrumbs();
+
+const websiteSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SITE_TITLE,
+  url: Astro.site,
+  inLanguage: "zh-CN",
+};
+
+const breadcrumbSchema = breadcrumbs
+  ? {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: breadcrumbs.map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.label,
+        ...(item.href
+          ? { item: new URL(item.href, Astro.site).toString() }
+          : { item: canonicalURL.toString() }),
+      })),
+    }
+  : null;
+
+const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
+  .flat()
+  .filter(Boolean);
 ---
 
 <!doctype html>
@@ -95,6 +126,8 @@ const breadcrumbs = providedBreadcrumbs ?? buildDefaultBreadcrumbs();
 
     <title>{finalTitle}</title>
     <meta name="description" content={description} />
+    {keywords.length > 0 && <meta name="keywords" content={keywords.join(",")} />}
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
     <link rel="canonical" href={canonicalURL} />
 
     <link rel="icon" href="/favicon.ico" />
@@ -124,6 +157,16 @@ const breadcrumbs = providedBreadcrumbs ?? buildDefaultBreadcrumbs();
     <meta name="twitter:title" content={finalTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={socialImageURL} />
+
+    {
+      structuredDataList.map((schema, index) => (
+        <script
+          type="application/ld+json"
+          set:html={JSON.stringify(schema)}
+          data-schema-id={`seo-schema-${index}`}
+        />
+      ))
+    }
   </head>
   <body class="bg-base-100 text-base-content min-h-screen topography">
     <Header
