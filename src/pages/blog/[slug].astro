@@ -26,7 +26,15 @@ interface Props {
 }
 const { post } = Astro.props;
 const { Content, headings } = await post.render();
-const { title, description, pubDate, updated, image } = post.data;
+const {
+  title,
+  description,
+  pubDate,
+  updated,
+  image,
+  tags = [],
+  categories = [],
+} = post.data;
 
 const author = "HY";
 // --- 预计阅读时间计算 ---
@@ -55,6 +63,35 @@ const readTime = `预计阅读 ${totalMinutes} 分钟`;
 const shareUrl = post.shortLink || post.longUrl;
 
 const ogImageUrl = `/og/${post.slug}.png`;
+const seoKeywords = [
+  ...new Set(["HY博客", "技术博客", ...categories, ...tags]),
+];
+
+const articleStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: title,
+  description,
+  image: [new URL(ogImageUrl, Astro.site).toString()],
+  datePublished: new Date(pubDate).toISOString(),
+  ...(updated ? { dateModified: new Date(updated).toISOString() } : {}),
+  mainEntityOfPage: post.longUrl,
+  url: post.longUrl,
+  author: {
+    "@type": "Person",
+    name: author,
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "HY博客",
+    logo: {
+      "@type": "ImageObject",
+      url: new URL("/avatar.webp", Astro.site).toString(),
+    },
+  },
+  inLanguage: "zh-CN",
+  keywords: seoKeywords,
+};
 
 const customComponents = {
   img: Figure,
@@ -65,6 +102,8 @@ const customComponents = {
   title={title}
   description={description}
   image={ogImageUrl}
+  keywords={seoKeywords}
+  structuredData={articleStructuredData}
   headings={headings}
 >
   <article class="max-w-4xl mx-auto">
