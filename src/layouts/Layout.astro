@@ -20,10 +20,10 @@ const GITHUB_URL = "https://github.com/himyhy";
 const TELEGRAM_URL = "https://t.me/hy_post";
 
 const navLinks = [
-  { href: "/", label: "首页" },
-  { href: "/blog", label: "博客" },
-  { href: "/guestbook", label: "留言" },
-  { href: "/friends", label: "朋友" },
+  { href: "/", label: "首页", icon: "ri-home-5-line" },
+  { href: "/blog", label: "博客", icon: "ri-article-line" },
+  { href: "/guestbook", label: "留言", icon: "ri-chat-smile-3-line" },
+  { href: "/friends", label: "朋友", icon: "ri-group-line" },
 ];
 
 interface BreadcrumbItem {
@@ -173,7 +173,7 @@ const breadcrumbs = providedBreadcrumbs ?? buildDefaultBreadcrumbs();
                     }}
                     aria-current={isActive ? "page" : undefined}
                   >
-                    <i class={link.href === "/" ? "ri-home-5-line" : link.href === "/blog" ? "ri-article-line" : link.href === "/friends" ? "ri-group-line" : "ri-chat-smile-3-line"} aria-hidden="true" />
+                    <i class={link.icon} aria-hidden="true" />
                     <span>{link.label}</span>
                   </a>
                 );
