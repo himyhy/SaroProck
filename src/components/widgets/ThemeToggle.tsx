@@ -6,24 +6,43 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     setMounted(true);
-    // 获取保存的主题
-    const savedTheme = localStorage.getItem("theme");
-    const initialTheme = savedTheme || "light";
     
+    // 获取保存的主题
+    let savedTheme: string | null = null;
+    try {
+      savedTheme = localStorage.getItem("theme");
+    } catch (e) {
+      console.warn("localStorage not available:", e);
+    }
+    
+    const initialTheme = savedTheme || "light";
     setTheme(initialTheme);
     applyTheme(initialTheme);
   }, []);
 
   const applyTheme = (newTheme: string) => {
-    const html = document.documentElement;
-    if (newTheme === "dark") {
-      html.setAttribute("data-theme", "dark");
-      document.documentElement.classList.add("dark");
-    } else {
+    try {
+      const html = document.documentElement;
+      
+      // 移除所有主题相关的属性和类
       html.removeAttribute("data-theme");
       document.documentElement.classList.remove("dark");
+      
+      // 应用新主题
+      if (newTheme === "dark") {
+        html.setAttribute("data-theme", "dark");
+        document.documentElement.classList.add("dark");
+      }
+      
+      // 保存到 localStorage
+      try {
+        localStorage.setItem("theme", newTheme);
+      } catch (e) {
+        console.warn("Failed to save theme to localStorage:", e);
+      }
+    } catch (e) {
+      console.error("Error applying theme:", e);
     }
-    localStorage.setItem("theme", newTheme);
   };
 
   const toggleTheme = () => {
@@ -40,6 +59,7 @@ export default function ThemeToggle() {
       className="btn btn-ghost btn-circle"
       title={theme === "light" ? "切换到夜间模式" : "切换到日间模式"}
       aria-label="切换主题"
+      type="button"
     >
       {theme === "light" ? (
         <i className="ri-moon-line text-lg"></i>
