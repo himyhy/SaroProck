@@ -67,8 +67,8 @@ const { siteTitle, navLinks = [], currentPath, mobileDrawerId } = Astro.props;
           })}
         </nav>
 
-        <SearchBar client:idle />
-        <ThemeToggle client:idle />
+        <SearchBar client:load />
+        <ThemeToggle client:load />
       </div>
     </div>
   </div>
