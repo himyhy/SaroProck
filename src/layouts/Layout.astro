@@ -8,6 +8,7 @@ import Footer from "@components/layout/Footer.astro";
 import Header from "@components/layout/Header.astro";
 import Hero from "@components/layout/Hero.astro";
 import Sidebar from "@components/layout/Sidebar.astro";
+import FloatingNav from "@components/layout/FloatingNav.astro";
 import BackToTop from "@components/widgets/BackToTop.astro";
 import type { MarkdownHeading } from "astro";
 
@@ -344,6 +345,7 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
     />
 
     <BackToTop />
+    <FloatingNav />
     <script is:inline>
       // 核心 UI 初始化：即使其他资源加载失败，也要保证侧边栏可用
       (function() {

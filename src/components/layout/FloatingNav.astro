@@ -1,0 +1,60 @@
+---
+---
+
+<div class="fixed bottom-6 right-6 flex flex-col gap-3 z-40 no-print">
+  <!-- 博客按钮 -->
+  <a
+    href="/blog"
+    class="w-12 h-12 rounded-full bg-primary text-primary-content shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center group"
+    title="博客"
+  >
+    <i class="ri-article-line text-xl"></i>
+  </a>
+
+  <!-- 首页按钮 -->
+  <a
+    href="/"
+    class="w-12 h-12 rounded-full bg-primary text-primary-content shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center group"
+    title="首页"
+  >
+    <i class="ri-home-line text-xl"></i>
+  </a>
+
+  <!-- 回到顶部按钮 -->
+  <button
+    id="scroll-to-top"
+    class="w-12 h-12 rounded-full bg-primary text-primary-content shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center opacity-0 invisible"
+    title="回到顶部"
+  >
+    <i class="ri-arrow-up-line text-xl"></i>
+  </button>
+</div>
+
+<script>
+  const scrollToTopBtn = document.getElementById("scroll-to-top");
+
+  // 显示/隐藏按钮
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 300) {
+      scrollToTopBtn.classList.remove("opacity-0", "invisible");
+      scrollToTopBtn.classList.add("opacity-100", "visible");
+    } else {
+      scrollToTopBtn.classList.add("opacity-0", "invisible");
+      scrollToTopBtn.classList.remove("opacity-100", "visible");
+    }
+  });
+
+  // 点击回到顶部
+  scrollToTopBtn.addEventListener("click", () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  });
+</script>
+
+<style>
+  #scroll-to-top {
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+</style>
