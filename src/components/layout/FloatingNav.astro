@@ -1,7 +1,7 @@
 ---
 ---
 
-<div class="fixed bottom-6 right-6 flex flex-col gap-3 z-40 no-print" id="floating-nav">
+<div class="fixed bottom-6 right-6 flex flex-col gap-3 z-40 no-print opacity-0 invisible" id="floating-nav">
   <!-- 首页按钮 -->
   <a
     href="/"
@@ -23,7 +23,7 @@
   <!-- 回到顶部按钮 -->
   <button
     id="scroll-to-top"
-    class="w-12 h-12 rounded-full bg-primary text-primary-content shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center opacity-0 invisible"
+    class="w-12 h-12 rounded-full bg-primary text-primary-content shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center"
     title="回到顶部"
   >
     <i class="ri-arrow-up-line text-xl"></i>
@@ -59,4 +59,3 @@
     transition: opacity 0.3s ease, visibility 0.3s ease;
   }
 </style>
-
