@@ -129,6 +129,39 @@ const EMAIL_ADDRESS = "myhywo@gmail.com";
       ) : (
         <>
           <div class="bg-base-200/40 backdrop-blur-sm rounded-xl p-5 border border-base-content/5">
+            <h3 class="font-semibold text-base mb-4 flex items-center">
+              <i class="ri-article-line text-primary mr-2" />
+              最新文章
+            </h3>
+            <div class="space-y-3">
+              {allPosts.slice(0, 5).map((post: CollectionEntry<"blog">) => (
+                <a
+                  href={`/blog/${post.slug}`}
+                  class="block p-3 rounded-lg bg-base-100 border border-base-content/10 hover:border-primary/60 hover:bg-base-100/80 transition group"
+                >
+                  <h4 class="text-sm font-semibold line-clamp-2 group-hover:text-primary transition">
+                    {post.data.title}
+                  </h4>
+                  <time class="text-xs text-base-content/50 mt-1 block">
+                    {post.data.pubDate.toLocaleDateString("zh-CN", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </time>
+                </a>
+              ))}
+            </div>
+            <a
+              href="/blog"
+              class="btn btn-ghost btn-sm w-full mt-4 justify-start"
+            >
+              <i class="ri-arrow-right-line" />
+              查看全部文章
+            </a>
+          </div>
+
+          <div class="bg-base-200/40 backdrop-blur-sm rounded-xl p-5 border border-base-content/5">
             <h3 class="font-semibold text-base mb-5 flex items-center">
               <i class="ri-bar-chart-fill text-primary mr-2" />
               站点统计
@@ -182,6 +215,43 @@ const EMAIL_ADDRESS = "myhywo@gmail.com";
             </div>
           </div>
         </>
+      )
+    }
+
+    {
+      !headings && (
+        <div class="bg-base-200/40 backdrop-blur-sm rounded-xl p-5 border border-base-content/5">
+          <h3 class="font-semibold text-base mb-4 flex items-center">
+            <i class="ri-article-line text-primary mr-2" />
+            最新文章
+          </h3>
+          <div class="space-y-3">
+            {allPosts.slice(0, 5).map((post: CollectionEntry<"blog">) => (
+              <a
+                href={`/blog/${post.slug}`}
+                class="block p-3 rounded-lg bg-base-100 border border-base-content/10 hover:border-primary/60 hover:bg-base-100/80 transition group"
+              >
+                <h4 class="text-sm font-semibold line-clamp-2 group-hover:text-primary transition">
+                  {post.data.title}
+                </h4>
+                <time class="text-xs text-base-content/50 mt-1 block">
+                  {post.data.pubDate.toLocaleDateString("zh-CN", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </time>
+              </a>
+            ))}
+          </div>
+          <a
+            href="/blog"
+            class="btn btn-ghost btn-sm w-full mt-4 justify-start"
+          >
+            <i class="ri-arrow-right-line" />
+            查看全部文章
+          </a>
+        </div>
       )
     }
   </div>
