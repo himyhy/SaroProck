@@ -1,54 +1,62 @@
 import { useEffect, useState } from "react";
 
+const getPreferredTheme = () => {
+  try {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "light" || savedTheme === "dark") {
+      return savedTheme;
+    }
+  } catch (e) {
+    console.warn("localStorage not available:", e);
+  }
+
+  if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    return "dark";
+  }
+
+  return "light";
+};
+
+const applyTheme = (newTheme: string) => {
+  try {
+    const html = document.documentElement;
+
+    if (newTheme === "dark") {
+      html.setAttribute("data-theme", "dark");
+      html.classList.add("dark");
+    } else {
+      html.setAttribute("data-theme", "light");
+      html.classList.remove("dark");
+    }
+
+    try {
+      localStorage.setItem("theme", newTheme);
+    } catch (e) {
+      console.warn("Failed to save theme to localStorage:", e);
+    }
+  } catch (e) {
+    console.error("Error applying theme:", e);
+  }
+};
+
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<string>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    
-    // 获取保存的主题
-    let savedTheme: string | null = null;
-    try {
-      savedTheme = localStorage.getItem("theme");
-    } catch (e) {
-      console.warn("localStorage not available:", e);
-    }
-    
-    const initialTheme = savedTheme || "light";
+
+    const initialTheme = getPreferredTheme();
     setTheme(initialTheme);
     applyTheme(initialTheme);
   }, []);
 
-  const applyTheme = (newTheme: string) => {
-    try {
-      const html = document.documentElement;
-      
-      // 移除所有主题相关的属性和类
-      html.removeAttribute("data-theme");
-      document.documentElement.classList.remove("dark");
-      
-      // 应用新主题
-      if (newTheme === "dark") {
-        html.setAttribute("data-theme", "dark");
-        document.documentElement.classList.add("dark");
-      }
-      
-      // 保存到 localStorage
-      try {
-        localStorage.setItem("theme", newTheme);
-      } catch (e) {
-        console.warn("Failed to save theme to localStorage:", e);
-      }
-    } catch (e) {
-      console.error("Error applying theme:", e);
-    }
-  };
-
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    applyTheme(newTheme);
+    setTheme((currentTheme) => {
+      const newTheme = currentTheme === "light" ? "dark" : "light";
+      applyTheme(newTheme);
+      return newTheme;
+    });
   };
 
   if (!mounted) return null;
