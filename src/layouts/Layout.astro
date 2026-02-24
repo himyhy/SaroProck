@@ -125,6 +125,24 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
     <meta name="generator" content={Astro.generator} />
     <meta name="author" content={SITE_AUTHOR} />
 
+    <script is:inline>
+      // 在页面加载前立即应用保存的主题，防止闪烁
+      (function() {
+        try {
+          const savedTheme = localStorage.getItem("theme");
+          if (savedTheme === "dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.removeAttribute("data-theme");
+            document.documentElement.classList.remove("dark");
+          }
+        } catch (e) {
+          console.warn("Failed to apply theme on load:", e);
+        }
+      })();
+    </script>
+
     <title>{finalTitle}</title>
     <meta name="description" content={description} />
     {keywords.length > 0 && <meta name="keywords" content={keywords.join(",")} />}
