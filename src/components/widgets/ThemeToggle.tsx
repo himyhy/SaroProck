@@ -13,14 +13,30 @@ export default function ThemeToggle() {
     
     setTheme(initialTheme);
     applyTheme(initialTheme);
+
+    // 监听系统主题变化
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e: MediaQueryListEvent) => {
+      const newTheme = e.matches ? "dark" : "light";
+      // 只在没有保存主题时自动切换
+      if (!localStorage.getItem("theme")) {
+        setTheme(newTheme);
+        applyTheme(newTheme);
+      }
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   const applyTheme = (newTheme: string) => {
     const html = document.documentElement;
     if (newTheme === "dark") {
       html.setAttribute("data-theme", "dark");
+      document.documentElement.classList.add("dark");
     } else {
       html.removeAttribute("data-theme");
+      document.documentElement.classList.remove("dark");
     }
     localStorage.setItem("theme", newTheme);
   };
