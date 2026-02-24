@@ -6,27 +6,12 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     setMounted(true);
-    // 获取保存的主题或系统偏好
+    // 获取保存的主题
     const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
+    const initialTheme = savedTheme || "light";
     
     setTheme(initialTheme);
     applyTheme(initialTheme);
-
-    // 监听系统主题变化
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = (e: MediaQueryListEvent) => {
-      const newTheme = e.matches ? "dark" : "light";
-      // 只在没有保存主题时自动切换
-      if (!localStorage.getItem("theme")) {
-        setTheme(newTheme);
-        applyTheme(newTheme);
-      }
-    };
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
   const applyTheme = (newTheme: string) => {
