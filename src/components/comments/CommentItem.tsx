@@ -4,6 +4,7 @@ import hljs from "highlight.js";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { SENSITIVE_USERS } from "@/config";
+import { useUser } from "@/hooks/useUser";
 import CommentForm from "./CommentForm";
 import type { CommentData } from "./CommentsWrapper";
 import "highlight.js/styles/github.css"; // 亮色模式
@@ -91,6 +92,7 @@ const CommentItemComponent: React.FC<Props> = ({
   displayMode,
 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
+  const { isLoggedIn } = useUser();
   const websiteHref = getWebsiteHref(comment.website);
 
   const SENSITIVE_USERS_LOWER = SENSITIVE_USERS.map((u) => u.toLowerCase());
@@ -115,6 +117,17 @@ const CommentItemComponent: React.FC<Props> = ({
   // --- 留言板卡片模式 ---
   if (displayMode === "guestbook") {
     const hasReplies = comment.children && comment.children.length > 0;
+
+    const handleReplyClick = () => {
+      if (!isLoggedIn) {
+        // 未登录，跳转到登录页面
+        const redirectUrl = `/login?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+        window.location.href = redirectUrl;
+      } else {
+        // 已登录，切换回复表单
+        setShowReplyForm(!showReplyForm);
+      }
+    };
 
     return (
       <div className="guestbook-card flex flex-col h-full rounded-2xl shadow-sm border border-base-content/10 bg-base-100/60 transition-all duration-300 hover:shadow-lg backdrop-blur-sm">
@@ -176,7 +189,7 @@ const CommentItemComponent: React.FC<Props> = ({
             <button
               type="button"
               className="btn btn-ghost btn-sm rounded-lg gap-1"
-              onClick={() => setShowReplyForm(!showReplyForm)}
+              onClick={handleReplyClick}
             >
               <i className="ri-chat-1-line" />
               <span>
