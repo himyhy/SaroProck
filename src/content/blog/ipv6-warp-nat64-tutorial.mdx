@@ -1,0 +1,342 @@
+---
+title: 纯 IPv6 服务器获得 IPv4 出站能力：NAT64 DNS + Cloudflare WARP 完整指南
+description: 为纯 IPv6 服务器配置 IPv4 出站能力的实战教程。先用 NAT64 DNS 临时应急，再用 Cloudflare WARP 获得长期稳定的解决方案。
+pubDate: 2026-02-24
+tags:
+  - IPv6
+  - WARP
+  - NAT64
+  - 网络配置
+  - Linux
+categories:
+  - 技术
+draft: false
+---
+
+import Warning from "../../components/mdx/Warning.astro";
+
+## 问题：纯 IPv6 服务器的困境
+
+你有一台纯 IPv6 服务器，但现实很残酷：
+
+- GitHub、PyPI、Docker Hub 等主要服务还是 IPv4
+- 无法下载软件包、安装脚本
+- 即使有 IPv6 DNS，也解析不了 IPv4 资源
+- 一切都卡在"网络不可达"
+
+**这篇文章就是为了解决这个问题。**
+
+---
+
+## 解决方案：两步走
+
+### 第一步：NAT64 DNS（临时应急）
+
+用公益 NAT64 服务器临时获得 IPv4 访问能力，这样你就能下载 wgcf。
+
+### 第二步：Cloudflare WARP（长期方案）
+
+配置 WARP 获得稳定的 IPv4 出站，然后停用 NAT64。
+
+---
+
+## 第一步：配置 NAT64 DNS
+
+### 什么是 NAT64？
+
+NAT64 是 IPv6 到 IPv4 的转换技术。通过配置 NAT64 DNS 服务器，纯 IPv6 服务器可以访问 IPv4 资源。
+
+**公益 NAT64 服务器（欧洲）：**
+- `2001:67c:2b0::4`
+- `2001:67c:2b0::6`
+
+### 配置
+
+```bash
+# 编辑 /etc/resolv.conf
+cat > /etc/resolv.conf << 'EOF'
+nameserver 2001:67c:2b0::4
+nameserver 2001:67c:2b0::6
+EOF
+
+# 验证
+cat /etc/resolv.conf
+
+# 测试 DNS 解析
+nslookup github.com
+
+# 测试连接
+curl -I https://github.com
+```
+
+**预期输出：** `HTTP/2 200`
+
+<Warning>
+  **为什么只是临时方案？** NAT64 服务通常收费，免费的公益服大多在欧洲。如果你的服务器在美国，流量要先去欧洲再回来，延迟高。不适合长期使用。
+</Warning>
+
+---
+
+## 第二步：安装 wgcf
+
+现在网络可用了，下载 wgcf 来配置 Cloudflare WARP。
+
+### 下载 wgcf
+
+```bash
+cd /root
+wget -6 -qO wgcf https://github.com/ViRb3/wgcf/releases/download/v2.2.30/wgcf_2.2.30_linux_amd64
+chmod +x wgcf
+
+# 验证
+ls -lah wgcf
+```
+
+### 注册 WARP 账户
+
+```bash
+cd /root
+echo 'yes' | ./wgcf register
+```
+
+**输出示例：**
+```
+Successfully created Cloudflare Warp account
+Account Id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+### 生成 WireGuard 配置
+
+```bash
+./wgcf generate
+cat wgcf-profile.conf
+```
+
+---
+
+## 第三步：配置 WireGuard 接口
+
+Alpine Linux 缺少 `ip6tables-restore`，所以我们用手动方式配置。
+
+### 手动启动 WireGuard
+
+```bash
+# 1. 复制配置文件
+cp /root/wgcf-profile.conf /etc/wireguard/wgcf.conf
+chmod 600 /etc/wireguard/wgcf.conf
+
+# 2. 创建 WireGuard 接口
+ip link add wgcf type wireguard
+
+# 3. 设置私钥
+wg set wgcf private-key <(grep PrivateKey /root/wgcf-profile.conf | awk '{print $3}')
+
+# 4. 配置 IP 地址
+ip address add 172.16.0.2/32 dev wgcf
+ip address add 2606:4700:110:8327:83f3:4ac1:53d5:b879/128 dev wgcf
+
+# 5. 设置 MTU
+ip link set mtu 1280 up dev wgcf
+
+# 6. 配置 Peer（Cloudflare WARP 服务器）
+wg set wgcf peer bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo= \
+  allowed-ips 0.0.0.0/0,::/0 \
+  endpoint engage.cloudflareclient.com:2408
+
+# 7. 配置路由（让所有 IPv4 流量走 WARP）
+ip route add default dev wgcf
+
+# 8. 配置 DNS
+cat > /etc/resolv.conf << 'EOF'
+nameserver 2606:4700:4700::1111
+nameserver 2606:4700:4700::1001
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+EOF
+```
+
+### 验证 WireGuard 状态
+
+```bash
+wg show wgcf
+ip route show
+cat /etc/resolv.conf
+```
+
+---
+
+## 第四步：验证 IPv4 出站能力
+
+### 测试 IPv4 连接
+
+```bash
+curl -4 ipinfo.io
+```
+
+**预期输出：Cloudflare IPv4 地址**
+```json
+{
+  "ip": "104.28.197.244",
+  "org": "AS13335 Cloudflare, Inc.",
+  ...
+}
+```
+
+### 测试 IPv6 连接（确保不中断）
+
+```bash
+ping -c 1 2001:4860:4860::8888
+```
+
+**预期：正常响应**
+
+---
+
+## 第五步：清理 NAT64 DNS
+
+现在 WARP 已经配置好，停止使用 NAT64 DNS，改用 Cloudflare DNS。
+
+```bash
+cat > /etc/resolv.conf << 'EOF'
+nameserver 2606:4700:4700::1111
+nameserver 2606:4700:4700::1001
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+EOF
+```
+
+---
+
+## 一键配置脚本
+
+如果想一次性配置，用这个脚本：
+
+```bash
+#!/bin/bash
+
+# 1. 临时配置 NAT64 DNS
+echo "配置 NAT64 DNS..."
+cat > /etc/resolv.conf << 'EOF'
+nameserver 2001:67c:2b0::4
+nameserver 2001:67c:2b0::6
+EOF
+
+# 2. 下载 wgcf
+echo "下载 wgcf..."
+cd /root
+wget -6 -qO wgcf https://github.com/ViRb3/wgcf/releases/download/v2.2.30/wgcf_2.2.30_linux_amd64
+chmod +x wgcf
+
+# 3. 注册 WARP 账户
+echo "注册 WARP 账户..."
+echo 'yes' | ./wgcf register
+
+# 4. 生成配置
+echo "生成 WireGuard 配置..."
+./wgcf generate
+
+# 5. 配置 WireGuard
+echo "配置 WireGuard..."
+cp /root/wgcf-profile.conf /etc/wireguard/wgcf.conf
+chmod 600 /etc/wireguard/wgcf.conf
+
+ip link add wgcf type wireguard
+wg set wgcf private-key <(grep PrivateKey /root/wgcf-profile.conf | awk '{print $3}')
+ip address add 172.16.0.2/32 dev wgcf
+ip link set mtu 1280 up dev wgcf
+wg set wgcf peer bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo= \
+  allowed-ips 0.0.0.0/0,::/0 \
+  endpoint engage.cloudflareclient.com:2408
+ip route add default dev wgcf
+
+# 6. 配置 DNS
+echo "配置 DNS..."
+cat > /etc/resolv.conf << 'EOF'
+nameserver 2606:4700:4700::1111
+nameserver 2606:4700:4700::1001
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+EOF
+
+# 7. 验证
+echo "验证 IPv4 出站..."
+curl -4 ipinfo.io
+
+echo "验证 IPv6 连接..."
+ping -c 1 2001:4860:4860::8888
+
+echo "配置完成！"
+```
+
+---
+
+## 故障排查
+
+### WireGuard 接口创建失败
+
+**错误：** `RTNETLINK answers: File exists`
+
+**解决：**
+```bash
+ip link delete wgcf 2>/dev/null
+ip link add wgcf type wireguard
+```
+
+### DNS 无法解析
+
+**错误：** `curl: (6) Could not resolve host`
+
+**解决：**
+```bash
+cat /etc/resolv.conf
+ping -c 1 2606:4700:4700::1111
+nslookup github.com 2606:4700:4700::1111
+```
+
+### IPv4 出站失败
+
+**错误：** `curl: (7) Failed to connect`
+
+**解决：**
+```bash
+wg show wgcf
+ip route show
+wg show wgcf peers
+```
+
+### IPv6 连接中断
+
+**症状：** SSH 连接断开
+
+**原因：** 默认路由指向 wgcf，导致 IPv6 流量也走 WARP
+
+**解决：** 只让 IPv4 流量走 WARP（见第三步的路由配置）
+
+---
+
+## 关键要点
+
+| 项目 | 说明 |
+|------|------|
+| **NAT64 DNS** | 临时方案，用来下载 wgcf；不适合长期使用 |
+| **WARP** | 长期方案，提供稳定的 IPv4 出站能力 |
+| **WireGuard** | WARP 的底层协议，需要手动配置（Alpine 不支持 wg-quick） |
+| **DNS 配置** | 使用 Cloudflare DNS（IPv6 优先），确保 DNS 查询可达 |
+| **路由配置** | 只让 IPv4 流量走 WARP，IPv6 保持原样 |
+
+---
+
+## 参考资源
+
+- **NAT64 服务列表：** http://nat64.xyz
+- **Cloudflare WARP：** https://www.cloudflare.com/warp/
+- **wgcf 项目：** https://github.com/ViRb3/wgcf
+- **WireGuard 文档：** https://www.wireguard.com/
+
+---
+
+## 总结
+
+通过 NAT64 DNS + Cloudflare WARP 的组合方案，我们成功为纯 IPv6 服务器配置了 IPv4 出站能力。这个方案既解决了初期的网络问题（无法下载软件），又提供了长期稳定的解决方案。
+
+**下次遇到纯 IPv6 服务器，你就知道怎么办了。**
