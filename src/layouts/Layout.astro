@@ -128,18 +128,22 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
     <script is:inline>
       // 在页面加载前立即应用主题，防止闪烁
       (function() {
-        try {
-          const savedTheme = localStorage.getItem("theme");
-          const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          const preferredTheme =
-            savedTheme === "light" || savedTheme === "dark"
-              ? savedTheme
-              : systemPrefersDark
-                ? "dark"
-                : "light";
+        const html = document.documentElement;
 
-          const html = document.documentElement;
-          if (preferredTheme === "dark") {
+        const readStoredTheme = () => {
+          try {
+            const stored = localStorage.getItem("theme");
+            return stored === "light" || stored === "dark" ? stored : null;
+          } catch {
+            return null;
+          }
+        };
+
+        const getSystemTheme = () =>
+          window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+        const applyTheme = (theme) => {
+          if (theme === "dark") {
             html.setAttribute("data-theme", "dark");
             html.classList.add("dark");
             html.style.colorScheme = "dark";
@@ -148,9 +152,35 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
             html.classList.remove("dark");
             html.style.colorScheme = "light";
           }
-        } catch (e) {
-          console.warn("Failed to apply theme on load:", e);
-        }
+        };
+
+        const setTheme = (theme) => {
+          const normalizedTheme = theme === "dark" ? "dark" : "light";
+          applyTheme(normalizedTheme);
+          window.__themePreference = normalizedTheme;
+
+          try {
+            localStorage.setItem("theme", normalizedTheme);
+          } catch {
+            // ignore
+          }
+
+          return normalizedTheme;
+        };
+
+        const getTheme = () => {
+          if (window.__themePreference === "light" || window.__themePreference === "dark") {
+            return window.__themePreference;
+          }
+
+          const stored = readStoredTheme();
+          const nextTheme = stored ?? getSystemTheme();
+          window.__themePreference = nextTheme;
+          return nextTheme;
+        };
+
+        window.__themeApi = { getTheme, setTheme, applyTheme };
+        applyTheme(getTheme());
       })();
     </script>
 

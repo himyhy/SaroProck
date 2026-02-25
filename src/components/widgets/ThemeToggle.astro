@@ -10,22 +10,7 @@
 
 <script is:inline>
   (() => {
-    const getPreferredTheme = () => {
-      try {
-        const savedTheme = localStorage.getItem("theme");
-        if (savedTheme === "light" || savedTheme === "dark") {
-          return savedTheme;
-        }
-      } catch {
-        // ignore
-      }
-
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    };
-
-    const getAppliedTheme = () => {
+    const getFallbackTheme = () => {
       const html = document.documentElement;
       return html.getAttribute("data-theme") === "dark" ||
         html.classList.contains("dark")
@@ -33,23 +18,32 @@
         : "light";
     };
 
-    const applyTheme = (theme) => {
-      const html = document.documentElement;
-      if (theme === "dark") {
-        html.setAttribute("data-theme", "dark");
-        html.classList.add("dark");
-        html.style.colorScheme = "dark";
-      } else {
-        html.setAttribute("data-theme", "light");
-        html.classList.remove("dark");
-        html.style.colorScheme = "light";
+    const getThemeApi = () => {
+      const globalApi = window.__themeApi;
+      if (
+        globalApi &&
+        typeof globalApi.getTheme === "function" &&
+        typeof globalApi.setTheme === "function"
+      ) {
+        return globalApi;
       }
 
-      try {
-        localStorage.setItem("theme", theme);
-      } catch {
-        // ignore
-      }
+      return {
+        getTheme: getFallbackTheme,
+        setTheme: (theme) => {
+          const html = document.documentElement;
+          if (theme === "dark") {
+            html.setAttribute("data-theme", "dark");
+            html.classList.add("dark");
+            html.style.colorScheme = "dark";
+          } else {
+            html.setAttribute("data-theme", "light");
+            html.classList.remove("dark");
+            html.style.colorScheme = "light";
+          }
+          return theme === "dark" ? "dark" : "light";
+        },
+      };
     };
 
     const syncButtonState = (button, theme) => {
@@ -62,27 +56,33 @@
       button.title = theme === "light" ? "切换到夜间模式" : "切换到日间模式";
     };
 
+    const syncAllButtons = () => {
+      const api = getThemeApi();
+      const currentTheme = api.getTheme();
+      document
+        .querySelectorAll("button[data-theme-toggle]")
+        .forEach((el) => syncButtonState(el, currentTheme));
+    };
+
     const bindToggle = (button) => {
       if (!(button instanceof HTMLButtonElement) || button.dataset.themeToggleBound === "1") {
         return;
       }
 
       button.dataset.themeToggleBound = "1";
-      syncButtonState(button, getAppliedTheme());
+      syncButtonState(button, getThemeApi().getTheme());
 
       button.addEventListener("click", () => {
-        const current = getAppliedTheme();
+        const api = getThemeApi();
+        const current = api.getTheme();
         const next = current === "light" ? "dark" : "light";
-        applyTheme(next);
-        document
-          .querySelectorAll("button[data-theme-toggle]")
-          .forEach((el) => syncButtonState(el, next));
+        api.setTheme(next);
+        syncAllButtons();
       });
     };
 
     const init = () => {
-      const preferred = getPreferredTheme();
-      applyTheme(preferred);
+      syncAllButtons();
       document
         .querySelectorAll("button[data-theme-toggle]")
         .forEach((el) => bindToggle(el));
