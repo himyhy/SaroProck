@@ -4,11 +4,11 @@ import "@styles/global.css";
 import "@styles/background.css";
 import "remixicon/fonts/remixicon.css";
 
+import FloatingNav from "@components/layout/FloatingNav.astro";
 import Footer from "@components/layout/Footer.astro";
 import Header from "@components/layout/Header.astro";
 import Hero from "@components/layout/Hero.astro";
 import Sidebar from "@components/layout/Sidebar.astro";
-import FloatingNav from "@components/layout/FloatingNav.astro";
 import BackToTop from "@components/widgets/BackToTop.astro";
 import type { MarkdownHeading } from "astro";
 
@@ -118,7 +118,7 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
 ---
 
 <!doctype html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -126,21 +126,102 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
     <meta name="author" content={SITE_AUTHOR} />
 
     <script is:inline>
-      // 在页面加载前立即应用保存的主题，防止闪烁
+      // 在页面加载前立即应用主题，防止闪烁，并统一处理所有切换按钮
       (function() {
-        try {
-          const savedTheme = localStorage.getItem("theme");
-          const html = document.documentElement;
-          if (savedTheme === "dark") {
+        const html = document.documentElement;
+
+        const readStoredTheme = () => {
+          try {
+            const stored = localStorage.getItem("theme");
+            return stored === "light" || stored === "dark" ? stored : null;
+          } catch {
+            return null;
+          }
+        };
+
+        const getSystemTheme = () =>
+          window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+        const applyTheme = (theme) => {
+          const normalizedTheme = theme === "dark" ? "dark" : "light";
+          if (normalizedTheme === "dark") {
             html.setAttribute("data-theme", "dark");
             html.classList.add("dark");
+            html.style.colorScheme = "dark";
           } else {
             html.setAttribute("data-theme", "light");
             html.classList.remove("dark");
+            html.style.colorScheme = "light";
           }
-        } catch (e) {
-          console.warn("Failed to apply theme on load:", e);
+          return normalizedTheme;
+        };
+
+        const syncToggleButtons = (theme) => {
+          const normalizedTheme = theme === "dark" ? "dark" : "light";
+          document.querySelectorAll("button[data-theme-toggle]").forEach((button) => {
+            const moon = button.querySelector('[data-theme-icon="moon"]');
+            const sun = button.querySelector('[data-theme-icon="sun"]');
+            if (moon instanceof HTMLElement) {
+              moon.classList.toggle("hidden", normalizedTheme !== "light");
+            }
+            if (sun instanceof HTMLElement) {
+              sun.classList.toggle("hidden", normalizedTheme !== "dark");
+            }
+            button.title =
+              normalizedTheme === "light" ? "切换到夜间模式" : "切换到日间模式";
+          });
+        };
+
+        const setTheme = (theme) => {
+          const normalizedTheme = applyTheme(theme);
+          window.__themePreference = normalizedTheme;
+
+          try {
+            localStorage.setItem("theme", normalizedTheme);
+          } catch {
+            // ignore
+          }
+
+          syncToggleButtons(normalizedTheme);
+          return normalizedTheme;
+        };
+
+        const getTheme = () => {
+          if (window.__themePreference === "light" || window.__themePreference === "dark") {
+            return window.__themePreference;
+          }
+
+          const stored = readStoredTheme();
+          const nextTheme = stored ?? getSystemTheme();
+          window.__themePreference = nextTheme;
+          return nextTheme;
+        };
+
+        const initTheme = () => {
+          const currentTheme = applyTheme(getTheme());
+          syncToggleButtons(currentTheme);
+        };
+
+        if (!window.__themeToggleDelegated) {
+          document.addEventListener("click", (event) => {
+            const target = event.target;
+            if (!(target instanceof Element)) return;
+
+            const toggleButton = target.closest("button[data-theme-toggle]");
+            if (!(toggleButton instanceof HTMLButtonElement)) return;
+
+            event.preventDefault();
+            const nextTheme = getTheme() === "light" ? "dark" : "light";
+            setTheme(nextTheme);
+          });
+
+          window.__themeToggleDelegated = true;
         }
+
+        window.__themeApi = { getTheme, setTheme, applyTheme, syncToggleButtons };
+
+        initTheme();
+        document.addEventListener("astro:page-load", initTheme);
       })();
     </script>
 

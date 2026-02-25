@@ -1,6 +1,6 @@
 ---
 import SearchBar from "@components/widgets/SearchBar";
-import ThemeToggle from "@components/widgets/ThemeToggle";
+import ThemeToggle from "@components/widgets/ThemeToggle.astro";
 
 export interface Props {
   siteTitle: string;
@@ -68,7 +68,7 @@ const { siteTitle, navLinks = [], currentPath, mobileDrawerId } = Astro.props;
         </nav>
 
         <SearchBar client:load />
-        <ThemeToggle client:load />
+        <ThemeToggle />
       </div>
     </div>
   </div>
