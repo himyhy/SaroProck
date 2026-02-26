@@ -1,0 +1,684 @@
+---
+title: 从开发到分享：Docker + GitHub 完整部署指南（以 Domain Checker 为例）
+description: 详细讲解如何开发一个 Docker 应用，推送到 Docker Hub，上传到 GitHub，以及别人如何快速使用你的项目。包含完整的代码示例和最佳实践。
+pubDate: 2026-02-27
+tags:
+  - Docker
+  - Docker Hub
+  - GitHub
+  - 部署
+  - DevOps
+  - 最佳实践
+categories:
+  - 技术
+draft: false
+---
+
+import Warning from "../../components/mdx/Warning.astro";
+
+## 前言
+
+你开发了一个很棒的应用，现在想让别人也能用。但怎么分享呢？
+
+- 直接给代码？别人还要自己配置环境、安装依赖
+- 打包成可执行文件？跨平台兼容性差
+- 上传到 Docker Hub？别人一条命令就能用
+
+这篇文章就是教你怎么做最后一种——用 Docker + GitHub 让你的应用可以被全世界使用。
+
+我们以 **Domain Checker**（批量域名查询工具）为例，从零开始讲解整个流程。
+
+---
+
+## 第一部分：准备工作
+
+### 你需要什么
+
+1. **Docker** — 已安装
+2. **Docker Hub 账户** — 免费注册：https://hub.docker.com
+3. **GitHub 账户** — 免费注册：https://github.com
+4. **Git** — 已安装
+5. **一个可以工作的应用** — 我们用 Domain Checker 作例子
+
+### 项目结构
+
+一个标准的可分享项目应该是这样的：
+
+```
+domain-checker/
+├── docker-compose.yml      # Docker Compose 配置
+├── .env.example            # 环境变量模板（给别人参考）
+├── .env                    # 真实环境变量（本地用，不上传）
+├── .gitignore              # Git 忽略规则
+├── README.md               # 项目说明
+├── Dockerfile              # Docker 镜像定义
+├── requirements.txt        # Python 依赖
+└── main.py                 # 应用代码
+```
+
+---
+
+## 第二部分：本地开发与测试
+
+### 1. 创建项目目录
+
+```bash
+mkdir domain-checker
+cd domain-checker
+```
+
+### 2. 编写应用代码
+
+创建 `main.py`（这里用一个简单的 FastAPI 应用作例子）：
+
+```python
+from fastapi import FastAPI
+import os
+
+app = FastAPI(title="Domain Checker")
+
+FASTLY_TOKEN = os.getenv("FASTLY_TOKEN", "")
+MAX_CONCURRENCY = int(os.getenv("MAX_CONCURRENCY", "5"))
+
+@app.get("/")
+async def index():
+    return {
+        "message": "Domain Checker API",
+        "token_configured": bool(FASTLY_TOKEN),
+        "max_concurrency": MAX_CONCURRENCY
+    }
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+```
+
+### 3. 创建 `requirements.txt`
+
+```
+fastapi==0.104.1
+uvicorn==0.24.0
+httpx==0.25.2
+pytz==2024.1
+python-multipart==0.0.6
+```
+
+### 4. 创建 `Dockerfile`
+
+```dockerfile
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+### 5. 创建 `docker-compose.yml`
+
+```yaml
+version: '3.8'
+
+services:
+  domain-checker:
+    image: myhywo/domain-checker:latest
+    container_name: domain-checker
+    restart: unless-stopped
+    
+    ports:
+      - "22332:8000"
+    
+    volumes:
+      - ./app:/app
+      - ./data:/app/data
+    
+    environment:
+      - FASTLY_TOKEN=${FASTLY_TOKEN}
+      - FASTLY_ENDPOINT=${FASTLY_ENDPOINT}
+      - MAX_CONCURRENCY=${MAX_CONCURRENCY:-5}
+      - HTTP_TIMEOUT_SECONDS=${HTTP_TIMEOUT_SECONDS:-10}
+      - CACHE_TTL_SECONDS=${CACHE_TTL_SECONDS:-86400}
+      - RESET_DAY=${RESET_DAY:-18}
+      - RESET_TIMEZONE=${RESET_TIMEZONE:-Asia/Shanghai}
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    networks:
+      - domain-checker-net
+
+networks:
+  domain-checker-net:
+    driver: bridge
+```
+
+### 6. 创建 `.env.example`
+
+这个文件告诉别人需要配置什么环境变量：
+
+```env
+# Fastly API Configuration
+FASTLY_TOKEN=your_fastly_api_token_here
+FASTLY_ENDPOINT=https://api.fastly.com/domain-management/v1/tools/status
+
+# Application Settings
+MAX_CONCURRENCY=5
+HTTP_TIMEOUT_SECONDS=10
+CACHE_TTL_SECONDS=86400
+
+# Reset Configuration
+RESET_DAY=18
+RESET_TIMEZONE=Asia/Shanghai
+```
+
+### 7. 创建 `.env`（本地用）
+
+这个文件放你的真实配置，**不要上传到 GitHub**：
+
+```env
+FASTLY_TOKEN=your_real_token_here
+FASTLY_ENDPOINT=https://api.fastly.com/domain-management/v1/tools/status
+MAX_CONCURRENCY=5
+HTTP_TIMEOUT_SECONDS=10
+CACHE_TTL_SECONDS=86400
+RESET_DAY=18
+RESET_TIMEZONE=Asia/Shanghai
+```
+
+### 8. 创建 `.gitignore`
+
+```
+.env
+.env.local
+*.log
+app/__pycache__/
+app/*.pyc
+data/
+.DS_Store
+```
+
+### 9. 本地测试
+
+```bash
+# 构建镜像
+docker compose build
+
+# 启动容器
+docker compose up -d
+
+# 测试应用
+curl http://localhost:22332/
+
+# 查看日志
+docker compose logs -f
+
+# 停止容器
+docker compose down
+```
+
+---
+
+## 第三部分：推送到 Docker Hub
+
+### 1. 登录 Docker Hub
+
+```bash
+docker login
+```
+
+输入你的 Docker Hub 用户名和密码。
+
+### 2. 给镜像打 tag
+
+假设你的 Docker Hub 用户名是 `myhywo`：
+
+```bash
+docker tag domain-checker-domain-checker myhywo/domain-checker:latest
+```
+
+### 3. 推送到 Docker Hub
+
+```bash
+docker push myhywo/domain-checker:latest
+```
+
+等待上传完成。你可以在 https://hub.docker.com/r/myhywo/domain-checker 看到你的镜像。
+
+<Warning>
+  **重要：** 推送前确保 `docker-compose.yml` 里的 `FASTLY_TOKEN` 是占位符（`your_fastly_api_token_here`），不是真实的 Token。真实的 Token 应该在本地的 `.env` 文件里。
+</Warning>
+
+---
+
+## 第四部分：上传到 GitHub
+
+### 1. 在 GitHub 创建新仓库
+
+访问 https://github.com/new，创建一个新仓库，名字叫 `domain-checker`。
+
+### 2. 初始化本地 Git 仓库
+
+```bash
+cd domain-checker
+git init
+git add .
+git commit -m "Initial commit: domain-checker with docker-compose"
+```
+
+### 3. 添加远程仓库
+
+```bash
+git remote add origin https://github.com/myhywo/domain-checker.git
+git branch -M main
+git push -u origin main
+```
+
+输入你的 GitHub 用户名和 Personal Access Token（或用 SSH 密钥）。
+
+### 4. 创建 `README.md`
+
+在项目根目录创建 `README.md`，告诉别人怎么用：
+
+```markdown
+# Domain Checker
+
+批量域名查询工具，基于 Fastly API，支持流式查询和溢价域名检测。
+
+## 快速开始
+
+### 方式 1：使用 Docker Compose（推荐）
+
+```bash
+# Clone 项目
+git clone https://github.com/myhywo/domain-checker.git
+cd domain-checker
+
+# 复制环境变量模板
+cp .env.example .env
+
+# 编辑 .env，填入你的 Fastly Token
+nano .env
+
+# 启动容器
+docker compose up -d
+```
+
+应用会在 `http://localhost:22332` 启动。
+
+### 方式 2：直接用 Docker 镜像
+
+```bash
+docker run -d \
+  -p 22332:8000 \
+  -e FASTLY_TOKEN=your_token_here \
+  -e FASTLY_ENDPOINT=https://api.fastly.com/domain-management/v1/tools/status \
+  myhywo/domain-checker:latest
+```
+
+## 配置说明
+
+| 环境变量 | 说明 | 默认值 |
+|---------|------|--------|
+| `FASTLY_TOKEN` | Fastly API Token（必需） | - |
+| `FASTLY_ENDPOINT` | Fastly API 地址 | `https://api.fastly.com/domain-management/v1/tools/status` |
+| `MAX_CONCURRENCY` | 并发查询数 | 5 |
+| `HTTP_TIMEOUT_SECONDS` | HTTP 超时时间（秒） | 10 |
+| `CACHE_TTL_SECONDS` | 缓存有效期（秒） | 86400 |
+| `RESET_DAY` | 每月重置日期 | 18 |
+| `RESET_TIMEZONE` | 时区 | Asia/Shanghai |
+
+## 功能
+
+- ✅ 批量域名查询
+- ✅ 流式查询结果
+- ✅ 溢价域名检测
+- ✅ 自动缓存
+- ✅ 月度 API 用量统计
+
+## 开发
+
+修改代码后，容器会自动重新加载（因为挂载了本地卷）。
+
+如需重启容器：
+
+```bash
+docker compose restart
+```
+
+## 许可
+
+MIT
+```
+
+### 5. 提交并推送
+
+```bash
+git add README.md
+git commit -m "Add README"
+git push
+```
+
+---
+
+## 第五部分：别人如何使用你的项目
+
+### 方式 1：从 GitHub Clone（推荐）
+
+```bash
+# Clone 项目
+git clone https://github.com/myhywo/domain-checker.git
+cd domain-checker
+
+# 复制环境变量模板
+cp .env.example .env
+
+# 编辑 .env，填入自己的 Fastly Token
+nano .env
+
+# 启动容器
+docker compose up -d
+
+# 访问应用
+curl http://localhost:22332/
+```
+
+### 方式 2：直接用 Docker 镜像（不需要 Clone）
+
+```bash
+docker run -d \
+  -p 22332:8000 \
+  -e FASTLY_TOKEN=their_token_here \
+  -e FASTLY_ENDPOINT=https://api.fastly.com/domain-management/v1/tools/status \
+  myhywo/domain-checker:latest
+```
+
+### 方式 3：用 Docker Compose（不需要 Clone）
+
+创建一个 `docker-compose.yml`：
+
+```yaml
+services:
+  domain-checker:
+    image: myhywo/domain-checker:latest
+    container_name: domain-checker
+    restart: unless-stopped
+    ports:
+      - "22332:8000"
+    environment:
+      - FASTLY_TOKEN=their_token_here
+      - FASTLY_ENDPOINT=https://api.fastly.com/domain-management/v1/tools/status
+      - RESET_DAY=18
+      - RESET_TIMEZONE=Asia/Shanghai
+```
+
+然后运行：
+
+```bash
+docker compose up -d
+```
+
+---
+
+## 第六部分：最佳实践
+
+### 1. 版本管理
+
+每次发布新版本时，给镜像打多个 tag：
+
+```bash
+# 构建镜像
+docker compose build
+
+# 打 tag
+docker tag domain-checker-domain-checker myhywo/domain-checker:latest
+docker tag domain-checker-domain-checker myhywo/domain-checker:v1.0.0
+
+# 推送
+docker push myhywo/domain-checker:latest
+docker push myhywo/domain-checker:v1.0.0
+```
+
+在 `docker-compose.yml` 里，别人可以选择用 `latest` 或指定版本：
+
+```yaml
+image: myhywo/domain-checker:v1.0.0  # 指定版本
+# 或
+image: myhywo/domain-checker:latest  # 最新版本
+```
+
+### 2. 敏感信息管理
+
+**永远不要在代码里硬编码 Token 或密钥。**
+
+✅ 正确做法：
+
+```yaml
+environment:
+  - FASTLY_TOKEN=${FASTLY_TOKEN}  # 从 .env 读取
+```
+
+❌ 错误做法：
+
+```yaml
+environment:
+  - FASTLY_TOKEN=abc123xyz  # 硬编码，会泄露！
+```
+
+### 3. 健康检查
+
+在 `docker-compose.yml` 里配置健康检查，Docker 会自动监控应用状态：
+
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
+  start_period: 40s
+```
+
+### 4. 日志管理
+
+配置日志驱动，防止日志文件无限增长：
+
+```yaml
+logging:
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+```
+
+### 5. 资源限制
+
+为容器设置 CPU 和内存限制，防止占用过多资源：
+
+```yaml
+deploy:
+  resources:
+    limits:
+      cpus: '1'
+      memory: 512M
+    reservations:
+      cpus: '0.5'
+      memory: 256M
+```
+
+### 6. 卷挂载
+
+- **代码卷** — 用于开发时热重载：`./app:/app`
+- **数据卷** — 用于持久化数据：`./data:/app/data`
+
+```yaml
+volumes:
+  - ./app:/app          # 代码（开发时热重载）
+  - ./data:/app/data    # 数据（持久化）
+```
+
+---
+
+## 第七部分：更新和维护
+
+### 更新代码后的流程
+
+```bash
+# 1. 修改代码
+nano main.py
+
+# 2. 测试
+docker compose restart
+curl http://localhost:22332/
+
+# 3. 重新构建镜像
+docker compose build
+
+# 4. 推送到 Docker Hub
+docker tag domain-checker-domain-checker myhywo/domain-checker:latest
+docker push myhywo/domain-checker:latest
+
+# 5. 提交到 GitHub
+git add .
+git commit -m "Fix: improve performance"
+git push
+
+# 6. 创建 Release（可选）
+# 在 GitHub 上创建一个新的 Release，标记版本号
+```
+
+### 自动化推送（可选）
+
+如果你想自动化这个流程，可以用 GitHub Actions：
+
+```yaml
+# .github/workflows/docker-push.yml
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: myhywo/domain-checker:latest
+```
+
+---
+
+## 常见问题
+
+### Q: 别人用我的镜像时，需要修改代码吗？
+
+**A:** 不需要。所有配置都通过环境变量传入，别人只需要修改 `.env` 文件或 `docker-compose.yml` 里的环境变量即可。
+
+### Q: 我的 Token 会泄露吗？
+
+**A:** 不会。只要你：
+1. 在 `docker-compose.yml` 里用占位符
+2. 在 `.env` 里放真实 Token
+3. 在 `.gitignore` 里排除 `.env`
+
+就不会泄露。
+
+### Q: 别人能看到我的 Token 吗？
+
+**A:** 不能。Token 只存在于别人的本地 `.env` 文件里，不会上传到 GitHub 或 Docker Hub。
+
+### Q: 如何回滚到旧版本？
+
+**A:** 在 `docker-compose.yml` 里改镜像标签：
+
+```yaml
+image: myhywo/domain-checker:v1.0.0  # 改成旧版本
+```
+
+然后重启：
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+### Q: 如何在多台服务器上部署？
+
+**A:** 在每台服务器上都运行同样的命令：
+
+```bash
+git clone https://github.com/myhywo/domain-checker.git
+cd domain-checker
+cp .env.example .env
+# 编辑 .env
+docker compose up -d
+```
+
+---
+
+## 总结
+
+| 步骤 | 命令 | 说明 |
+|------|------|------|
+| 1. 本地开发 | `docker compose up -d` | 在本地测试应用 |
+| 2. 推送到 Docker Hub | `docker push myhywo/domain-checker:latest` | 上传镜像 |
+| 3. 上传到 GitHub | `git push` | 上传代码 |
+| 4. 别人使用 | `docker compose up -d` | 一条命令启动 |
+
+现在你的应用已经可以被全世界使用了。每次更新代码时，只需要重复步骤 1-3 即可。
+
+---
+
+## 参考资源
+
+- **Docker 官方文档：** https://docs.docker.com/
+- **Docker Hub：** https://hub.docker.com/
+- **GitHub：** https://github.com/
+- **Docker Compose：** https://docs.docker.com/compose/
+- **最佳实践：** https://docs.docker.com/develop/dev-best-practices/
