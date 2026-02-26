@@ -269,87 +269,12 @@ git push -u origin main
 
 输入你的 GitHub 用户名和 Personal Access Token（或用 SSH 密钥）。
 
-### 4. 创建 `README.md`
-
-在项目根目录创建 `README.md`，告诉别人怎么用：
-
-```markdown
-# Domain Checker
-
-批量域名查询工具，基于 Fastly API，支持流式查询和溢价域名检测。
-
-## 快速开始
-
-### 方式 1：使用 Docker Compose（推荐）
-
-```bash
-# Clone 项目
-git clone https://github.com/myhywo/domain-checker.git
-cd domain-checker
-
-# 复制环境变量模板
-cp .env.example .env
-
-# 编辑 .env，填入你的 Fastly Token
-nano .env
-
-# 启动容器
-docker compose up -d
-```
-
-应用会在 `http://localhost:22332` 启动。
-
-### 方式 2：直接用 Docker 镜像
-
-```bash
-docker run -d \
-  -p 22332:8000 \
-  -e FASTLY_TOKEN=your_token_here \
-  -e FASTLY_ENDPOINT=https://api.fastly.com/domain-management/v1/tools/status \
-  myhywo/domain-checker:latest
-```
-
-## 配置说明
-
-| 环境变量 | 说明 | 默认值 |
-|---------|------|--------|
-| `FASTLY_TOKEN` | Fastly API Token（必需） | - |
-| `FASTLY_ENDPOINT` | Fastly API 地址 | `https://api.fastly.com/domain-management/v1/tools/status` |
-| `MAX_CONCURRENCY` | 并发查询数 | 5 |
-| `HTTP_TIMEOUT_SECONDS` | HTTP 超时时间（秒） | 10 |
-| `CACHE_TTL_SECONDS` | 缓存有效期（秒） | 86400 |
-| `RESET_DAY` | 每月重置日期 | 18 |
-| `RESET_TIMEZONE` | 时区 | Asia/Shanghai |
-
-## 功能
-
-- ✅ 批量域名查询
-- ✅ 流式查询结果
-- ✅ 溢价域名检测
-- ✅ 自动缓存
-- ✅ 月度 API 用量统计
-
-## 开发
-
-修改代码后，容器会自动重新加载（因为挂载了本地卷）。
-
-如需重启容器：
-
-```bash
-docker compose restart
-```
-
-## 许可
-
-MIT
-```
-
-### 5. 提交并推送
+### 4. 提交并推送到 GitHub
 
 ```bash
 git add README.md
-git commit -m "Add README"
-git push
+git commit -m "Initial commit: domain-checker with docker-compose"
+git push -u origin main
 ```
 
 ---
