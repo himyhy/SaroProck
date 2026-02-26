@@ -127,60 +127,23 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 ### 5. 创建 `docker-compose.yml`
 
 ```yaml
-version: '3.8'
-
 services:
   domain-checker:
     image: myhywo/domain-checker:latest
     container_name: domain-checker
     restart: unless-stopped
-    
     ports:
       - "22332:8000"
-    
     volumes:
       - ./app:/app
-      - ./data:/app/data
-    
     environment:
-      - FASTLY_TOKEN=${FASTLY_TOKEN}
-      - FASTLY_ENDPOINT=${FASTLY_ENDPOINT}
-      - MAX_CONCURRENCY=${MAX_CONCURRENCY:-5}
-      - HTTP_TIMEOUT_SECONDS=${HTTP_TIMEOUT_SECONDS:-10}
-      - CACHE_TTL_SECONDS=${CACHE_TTL_SECONDS:-86400}
-      - RESET_DAY=${RESET_DAY:-18}
-      - RESET_TIMEZONE=${RESET_TIMEZONE:-Asia/Shanghai}
-      - PYTHONUNBUFFERED=1
-      - PYTHONDONTWRITEBYTECODE=1
-    
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
-        reservations:
-          cpus: '0.5'
-          memory: 256M
-    
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    
-    networks:
-      - domain-checker-net
-
-networks:
-  domain-checker-net:
-    driver: bridge
+      - MAX_CONCURRENCY=5
+      - HTTP_TIMEOUT_SECONDS=10
+      - CACHE_TTL_SECONDS=86400
+      - FASTLY_TOKEN=your_fastly_api_token_here
+      - FASTLY_ENDPOINT=https://api.fastly.com/domain-management/v1/tools/status
+      - RESET_DAY=18
+      - RESET_TIMEZONE=Asia/Shanghai
 ```
 
 ### 6. 创建 `.env.example`
@@ -435,7 +398,12 @@ services:
     restart: unless-stopped
     ports:
       - "22332:8000"
+    volumes:
+      - ./app:/app
     environment:
+      - MAX_CONCURRENCY=5
+      - HTTP_TIMEOUT_SECONDS=10
+      - CACHE_TTL_SECONDS=86400
       - FASTLY_TOKEN=their_token_here
       - FASTLY_ENDPOINT=https://api.fastly.com/domain-management/v1/tools/status
       - RESET_DAY=18
