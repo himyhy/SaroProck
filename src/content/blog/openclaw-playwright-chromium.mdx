@@ -1,0 +1,164 @@
+---
+title: 在 OpenClaw 服务器上安装并使用 Playwright + Chromium（含 Xvfb）
+description: 在无桌面 Linux 服务器上部署 Playwright + Chromium，用于访问、点击、输入与截图，并总结与 OpenClaw 的集成方式与常见坑。
+pubDate: 2026-02-28
+tags:
+  - OpenClaw
+  - Playwright
+  - Chromium
+  - Xvfb
+  - 自动化
+categories:
+  - 技术
+draft: false
+---
+
+想在服务器上让 OpenClaw 具备“能打开网页、点击、输入、截图”的能力，最稳的路径通常是：**Playwright + Chromium + Xvfb**。
+
+这篇文章记录一套在无桌面 Linux 服务器上可复用的安装与使用流程，并顺带说明在 OpenClaw 里怎么把它用起来。
+
+> 说明：部分网站（尤其是 Google / Cloudflare 的高级验证）对自动化访问非常敏感，可能仍需要人工或更高级的网络/代理方案。本文重点是「让环境跑通」与「可稳定截图/交互」。
+
+## 1. 安装 Playwright
+
+确认 Node.js 环境可用：
+
+```bash
+node -v
+npm -v
+```
+
+安装 Playwright（推荐安装到工作区，避免全局包路径差异）：
+
+```bash
+cd /root/.openclaw/workspace
+npm install playwright
+```
+
+如果你更偏好全局安装（便于快速试验 CLI），也可以：
+
+```bash
+npm install -g playwright
+```
+
+## 2. 安装 Chromium
+
+下载 Playwright 管理的 Chromium：
+
+```bash
+npx playwright install chromium
+```
+
+Playwright 会把浏览器放到类似 `~/.cache/ms-playwright/` 的目录下。
+
+## 3. 安装系统依赖（关键）
+
+无桌面服务器上，Chromium 需要一堆运行库（字体、X11/GL/GTK 相关等）。直接安装 Playwright 的依赖集合最省事：
+
+```bash
+npx playwright install-deps chromium
+```
+
+这一步通常会安装 `xvfb` 以及各类字体与图形库依赖。
+
+## 4. 用 Xvfb 运行（无桌面环境推荐做法）
+
+即便你使用 `headless: true`，在某些环境/网站场景里也会遇到 “Missing X server or $DISPLAY”。
+
+统一用 `xvfb-run` 包一层，是最稳的无桌面运行方式：
+
+```bash
+xvfb-run -a node your-script.js
+```
+
+`-a` 会自动选择可用的 DISPLAY，避免冲突。
+
+## 5. 最小可用脚本：访问网页并截图
+
+在 `/root/.openclaw/workspace` 新建 `pw-shot.js`：
+
+```js
+const { chromium } = require('playwright');
+
+(async () => {
+  const browser = await chromium.launch({
+    headless: true,
+    // 服务器上常见建议参数
+    args: ['--no-sandbox', '--disable-dev-shm-usage'],
+  });
+
+  const page = await browser.newPage();
+  await page.goto('https://example.com', {
+    waitUntil: 'domcontentloaded',
+    timeout: 30000,
+  });
+
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: 'example.png', fullPage: false });
+  console.log('saved example.png');
+
+  await browser.close();
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
+```
+
+运行：
+
+```bash
+cd /root/.openclaw/workspace
+xvfb-run -a node pw-shot.js
+```
+
+## 6. 点击/输入：UI 框架页面的常见坑
+
+很多站点使用 UI 框架（例如 Semi Design / Ant Design）封装了复选框、按钮，导致：
+
+- 元素看起来可点，但点击会被某个 `span/div` 拦截
+- `click()` 超时，日志里出现 “intercepts pointer events”
+
+常用应对策略：
+
+1. **点击真正可点击的可视层**（比如 `.semi-checkbox-inner-display`）
+2. 必要时 `click({ force: true })`
+3. 用 `locator()` 结合 `:has-text()` 精准定位按钮
+
+示例：
+
+```js
+// 输入
+await page.locator('input').nth(0).fill('HY');
+await page.locator('input').nth(1).fill('2484913990');
+
+// 勾选（点可见层 + force）
+await page.locator('.semi-checkbox-inner-display').click({ force: true });
+
+// 点击登录
+await page.locator('button:has-text("登录"), button[type="submit"]').first().click();
+```
+
+## 7. 在 OpenClaw 里怎么“用起来”
+
+如果你不想依赖本地电脑（Chrome 扩展 relay），最直接的做法是：
+
+- 把 Playwright 脚本放在 `/root/.openclaw/workspace`
+- 让 OpenClaw 通过 `exec` 运行 `xvfb-run -a node xxx.js`
+- 输出截图/日志到 workspace，然后由 OpenClaw 转发到 Telegram
+
+例如：
+
+```bash
+cd /root/.openclaw/workspace
+xvfb-run -a node pw-shot.js
+```
+
+这样就能在服务器端完成“访问 + 交互 + 截图”的闭环。
+
+## 8. 结语
+
+Playwright + Chromium + Xvfb 是服务器端自动化的一条通用路线：
+
+- 能稳定跑在无桌面环境
+- 适合做截图、表单填写、点击跳转、简单抓取
+- 面对强风控验证码时需要额外策略，但不影响大多数日常自动化需求
