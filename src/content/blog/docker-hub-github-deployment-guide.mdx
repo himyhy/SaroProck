@@ -127,6 +127,7 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 ### 5. 创建 `docker-compose.yml`
 
 ```yaml
+version: '3.8'
 services:
   domain-checker:
     image: myhywo/domain-checker:latest
@@ -135,7 +136,8 @@ services:
     ports:
       - "22332:8000"
     volumes:
-      - ./app:/app
+      - ./data:/app/data
+      - ./wordlists:/app/wordlists
     environment:
       - MAX_CONCURRENCY=5
       - HTTP_TIMEOUT_SECONDS=10
@@ -144,6 +146,9 @@ services:
       - FASTLY_ENDPOINT=https://api.fastly.com/domain-management/v1/tools/status
       - RESET_DAY=18
       - RESET_TIMEZONE=Asia/Shanghai
+networks:
+  default:
+    name: domain-checker-net
 ```
 
 ### 6. 创建 `.env.example`
