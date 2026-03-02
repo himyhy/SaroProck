@@ -12,7 +12,7 @@ const { identifier, commentType, displayMode = "full" } = Astro.props;
 
 <div class="comments-container">
   <CommentsWrapper
-    client:visible
+    client:idle
     identifier={identifier}
     commentType={commentType}
     displayMode={displayMode}

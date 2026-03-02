@@ -1,8 +1,9 @@
 // src/components/comments/CommentsWrapper.tsx
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
-import CommentForm from "./CommentForm";
-import CommentList from "./CommentList";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+
+const CommentForm = lazy(() => import("./CommentForm"));
+const CommentList = lazy(() => import("./CommentList"));
 
 export interface CommentData {
   id: string;
@@ -225,31 +226,35 @@ const CommentsWrapper: React.FC<Props> = ({
               </button>
             </form>
             <h3 className="font-bold text-lg mb-4">创建新留言</h3>
-            <CommentForm
-              identifier={identifier}
-              commentType={commentType}
-              onCommentAdded={() => {
-                handleCommentAdded();
-                const modal = document.getElementById(
-                  "guestbook_modal",
-                ) as HTMLDialogElement | null;
-                if (modal) modal.close();
-              }}
-              displayMode="full"
-            />
+            <Suspense fallback={null}>
+              <CommentForm
+                identifier={identifier}
+                commentType={commentType}
+                onCommentAdded={() => {
+                  handleCommentAdded();
+                  const modal = document.getElementById(
+                    "guestbook_modal",
+                  ) as HTMLDialogElement | null;
+                  if (modal) modal.close();
+                }}
+                displayMode="full"
+              />
+            </Suspense>
           </div>
           <form method="dialog" className="modal-backdrop">
             <button type="submit">close</button>
           </form>
         </dialog>
 
-        <CommentList
-          comments={comments}
-          onLike={handleLike}
-          onCommentAdded={handleCommentAdded}
-          displayMode="guestbook"
-          isLoading={loading}
-        />
+        <Suspense fallback={null}>
+          <CommentList
+            comments={comments}
+            onLike={handleLike}
+            onCommentAdded={handleCommentAdded}
+            displayMode="guestbook"
+            isLoading={loading}
+          />
+        </Suspense>
       </div>
     );
   }
@@ -266,20 +271,24 @@ const CommentsWrapper: React.FC<Props> = ({
           <div className="divider -mt-2 mb-6" />
         </>
       )}
-      <CommentForm
-        identifier={identifier}
-        commentType={commentType}
-        onCommentAdded={handleCommentAdded}
-        displayMode={displayMode}
-        loading={loading}
-      />
-      <CommentList
-        comments={comments}
-        onLike={handleLike}
-        onCommentAdded={handleCommentAdded}
-        displayMode={displayMode}
-        isLoading={loading}
-      />
+      <Suspense fallback={null}>
+        <CommentForm
+          identifier={identifier}
+          commentType={commentType}
+          onCommentAdded={handleCommentAdded}
+          displayMode={displayMode}
+          loading={loading}
+        />
+      </Suspense>
+      <Suspense fallback={null}>
+        <CommentList
+          comments={comments}
+          onLike={handleLike}
+          onCommentAdded={handleCommentAdded}
+          displayMode={displayMode}
+          isLoading={loading}
+        />
+      </Suspense>
       {displayMode === "full" && (
         <div className="mt-6 text-sm text-right">
           本评论区由{" "}

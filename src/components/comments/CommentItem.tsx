@@ -1,6 +1,6 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
-import hljs from "highlight.js";
+// highlight.js 按需加载，避免把大体积库打进首屏评论 chunk
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { SENSITIVE_USERS } from "@/config";
@@ -107,11 +107,18 @@ const CommentItemComponent: React.FC<Props> = ({
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (contentRef.current) {
-      contentRef.current.querySelectorAll("pre code").forEach((block) => {
+    const runHighlight = async () => {
+      if (!contentRef.current) return;
+      const blocks = contentRef.current.querySelectorAll("pre code");
+      if (!blocks.length) return;
+
+      const { default: hljs } = await import("highlight.js/lib/common");
+      blocks.forEach((block) => {
         hljs.highlightElement(block as HTMLElement);
       });
-    }
+    };
+
+    runHighlight();
   }, []);
 
   // --- 留言板卡片模式 ---

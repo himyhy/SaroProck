@@ -10,32 +10,47 @@ export interface Props {
 const { author, twitterHandle, githubUrl, telegramUrl } = Astro.props;
 
 const CACHE_DURATION = 3600 * 1000;
-let cachedData: { stars: number; timestamp: number } | null = null;
+let cachedData: { stars: number | null; timestamp: number } | null = null;
 
 async function getRepoStars(): Promise<number | null> {
   if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
     return cachedData.stars;
   }
+
+  const owner = "himyhy";
+  const repo = "SaroProck";
+  const token = import.meta.env.GITHUB_TOKEN;
+
   try {
-    const owner = "himyhy";
-    const repo = "SaroProck";
-    const token = import.meta.env.GITHUB_TOKEN;
-    const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}`,
-      {
-        headers: {
-          Authorization: `token ${token}`,
-        },
-      },
-    );
-    if (!response.ok)
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "SaroProck-Footer-Stats",
+    };
+
+    if (token && token.trim()) {
+      headers.Authorization = `Bearer ${token.trim()}`;
+    }
+
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      // 未配置 token 或 token 无效时，静默降级，避免构建日志持续 401 噪音
+      if (response.status === 401 || response.status === 403 || response.status === 429) {
+        cachedData = { stars: null, timestamp: Date.now() };
+        return null;
+      }
       throw new Error(`GitHub API request failed: ${response.status}`);
+    }
+
     const data = await response.json();
-    const stars = data.stargazers_count;
+    const stars = Number(data?.stargazers_count ?? 0);
     cachedData = { stars, timestamp: Date.now() };
     return stars;
-  } catch (error) {
-    console.error("Failed to fetch GitHub stars:", error);
+  } catch {
+    // 网络波动等场景下静默降级，避免影响页面构建
+    cachedData = { stars: null, timestamp: Date.now() };
     return null;
   }
 }
