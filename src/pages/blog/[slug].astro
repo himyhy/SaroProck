@@ -66,6 +66,7 @@ const ogImageUrl = `/og/${post.slug}.png`;
 const seoKeywords = [
   ...new Set(["HY博客", "技术博客", ...categories, ...tags]),
 ];
+const canonicalUrl = new URL(`/blog/${post.slug}/`, Astro.site).toString();
 
 const articleStructuredData = {
   "@context": "https://schema.org",
@@ -74,9 +75,12 @@ const articleStructuredData = {
   description,
   image: [new URL(ogImageUrl, Astro.site).toString()],
   datePublished: new Date(pubDate).toISOString(),
-  ...(updated ? { dateModified: new Date(updated).toISOString() } : {}),
-  mainEntityOfPage: post.longUrl,
-  url: post.longUrl,
+  dateModified: new Date(updated ?? pubDate).toISOString(),
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": canonicalUrl,
+  },
+  url: canonicalUrl,
   author: {
     "@type": "Person",
     name: author,
@@ -91,6 +95,9 @@ const articleStructuredData = {
   },
   inLanguage: "zh-CN",
   keywords: seoKeywords,
+  articleSection: categories,
+  wordCount: words,
+  isAccessibleForFree: true,
 };
 
 const customComponents = {
