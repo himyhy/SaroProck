@@ -1,7 +1,7 @@
 ---
 ---
 
-<div class="fixed bottom-6 right-6 flex flex-col gap-3 z-40 no-print opacity-0 invisible" id="floating-nav">
+<div class="fixed bottom-24 right-6 md:bottom-28 md:right-8 flex flex-col gap-3 z-40 no-print opacity-0 invisible" id="floating-nav">
   <!-- 首页按钮 -->
   <a
     href="/"
@@ -19,23 +19,14 @@
   >
     <i class="ri-article-line text-xl"></i>
   </a>
-
-  <!-- 回到顶部按钮 -->
-  <button
-    id="scroll-to-top"
-    class="w-12 h-12 rounded-full bg-primary text-primary-content shadow-lg hover:shadow-xl hover:scale-110 transition-all flex items-center justify-center"
-    title="回到顶部"
-  >
-    <i class="ri-arrow-up-line text-xl"></i>
-  </button>
 </div>
 
 <script>
   const floatingNav = document.getElementById("floating-nav");
-  const scrollToTopBtn = document.getElementById("scroll-to-top");
 
   // 显示/隐藏整个浮动导航
   window.addEventListener("scroll", () => {
+    if (!floatingNav) return;
     if (window.scrollY > 300) {
       floatingNav.classList.remove("opacity-0", "invisible");
       floatingNav.classList.add("opacity-100", "visible");
@@ -43,14 +34,6 @@
       floatingNav.classList.add("opacity-0", "invisible");
       floatingNav.classList.remove("opacity-100", "visible");
     }
-  });
-
-  // 点击回到顶部
-  scrollToTopBtn.addEventListener("click", () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
   });
 </script>
 
