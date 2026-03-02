@@ -1,0 +1,221 @@
+---
+title: OpenClaw 安装方式全指南（含更新与回滚）
+description: 一文讲清 OpenClaw 的 4 种安装方式：官方脚本、npm 全局、源码、容器；并给出对应更新、回滚与排障策略。
+pubDate: 2026-03-02
+tags:
+  - OpenClaw
+  - 安装
+  - 更新
+  - 运维
+  - Linux
+categories:
+  - 技术
+draft: false
+---
+
+OpenClaw 的安装方式不止一种。选错方式，后续更新和排障会越来越痛；选对方式，升级、回滚、自动化都很顺。
+
+这篇文章按实战角度对比四类方式：**官方脚本安装、npm 全局安装、源码运行、容器部署**，并补上对应的**更新与回滚方法**。
+
+## 1) 官方脚本安装（推荐新手与快速上线）
+
+### 安装
+
+```bash
+curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh | bash
+```
+
+> `--proto '=https'` 与 `--tlsv1.2` 用于强制安全链路下载，建议保留。
+
+### 更新
+
+```bash
+openclaw gateway stop
+curl -fsSL --proto '=https' --tlsv1.2 https://openclaw.ai/install.sh | bash
+openclaw gateway start
+openclaw --version
+openclaw status
+```
+
+### 适用场景
+
+- 追求最快上手
+- 不想折腾 Node 包管理细节
+- 单机部署与维护
+
+### 优缺点
+
+- 优点：简单、快、官方路径清晰
+- 缺点：脚本入口可变，生产建议先在测试机验证
+
+---
+
+## 2) npm 全局安装（适合 Node 生态用户）
+
+### 安装
+
+```bash
+npm install -g openclaw
+```
+
+### 更新
+
+```bash
+openclaw gateway stop
+npm install -g openclaw@latest
+openclaw gateway start
+openclaw --version
+openclaw status
+```
+
+### 适用场景
+
+- 已有 Node/NPM 运维体系
+- 希望纳入 CI/CD 脚本
+
+### 优缺点
+
+- 优点：版本控制直观（`@latest` 或指定版本）
+- 缺点：需要关注全局路径，避免多份安装混淆
+
+建议排查命令：
+
+```bash
+which openclaw
+readlink -f "$(which openclaw)"
+npm ls -g --depth=0 | grep -i openclaw
+```
+
+---
+
+## 3) 源码运行（适合二次开发与调试）
+
+### 安装（示意）
+
+```bash
+git clone https://github.com/openclaw/openclaw.git
+cd openclaw
+npm install
+npm run build
+```
+
+### 更新
+
+```bash
+git pull
+npm install
+npm run build
+# 然后重启对应服务进程
+```
+
+### 适用场景
+
+- 需要改源码、打补丁
+- 想深度调试内部行为
+
+### 优缺点
+
+- 优点：自由度最高
+- 缺点：运维复杂度最高，需自行承担依赖兼容风险
+
+---
+
+## 4) 容器部署（适合团队与标准化运维）
+
+### 安装/运行（示意）
+
+```bash
+docker run -d --name openclaw ...
+```
+
+### 更新
+
+```bash
+docker pull <image>:<tag>
+docker stop openclaw && docker rm openclaw
+docker run -d --name openclaw <image>:<tag>
+```
+
+### 适用场景
+
+- 多环境一致性要求高
+- 需要可回滚、可审计、自动化发布
+
+### 优缺点
+
+- 优点：环境一致、回滚方便
+- 缺点：要处理卷挂载、配置注入、日志采集、健康检查
+
+---
+
+## 如何选型？
+
+- **个人用户/首次上手**：官方脚本
+- **Node 运维体系**：npm 全局
+- **开发调试/二开**：源码
+- **团队生产环境**：容器
+
+---
+
+## 通用更新与验收流程（推荐）
+
+无论哪种安装方式，都建议遵循：
+
+1. 升级前停止网关服务
+2. 按“原安装通道”升级（脚本装就脚本升，npm 装就 npm 升）
+3. 升级后立即验收
+
+```bash
+openclaw --version
+openclaw gateway status
+openclaw status
+```
+
+---
+
+## 回滚思路
+
+### 脚本 / npm 安装
+
+- 升级前备份当前安装目录（或保留上一个可用版本）
+- 若升级异常，回滚到旧版本再重启服务
+
+### 容器安装
+
+- 直接切回旧镜像 tag 并重启容器
+
+---
+
+## 常见问题
+
+### Q1：更新后版本没变？
+
+可能是已经最新，或执行的是另一套安装路径。先检查二进制指向：
+
+```bash
+which openclaw
+readlink -f "$(which openclaw)"
+```
+
+### Q2：脚本安装为什么也可能看到 npm 行为？
+
+很多安装脚本底层也会调用包管理器完成安装，这是实现细节。运维上仍建议“同路径安装同路径更新”，避免路径混乱。
+
+### Q3：安全告警如何处理？
+
+若凭据目录权限过宽（例如 777），应立即收紧：
+
+```bash
+chmod 700 /root/.openclaw/credentials
+```
+
+---
+
+## 结语
+
+没有“唯一正确”的安装方式，只有“最适合当前阶段”的方式。
+
+- 重稳定：脚本或容器
+- 重可控：npm 或源码
+
+关键不在“怎么装”，而在于你是否有清晰的**更新、验收、回滚**流程。
