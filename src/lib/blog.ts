@@ -8,8 +8,8 @@ export type ProcessedBlogEntry = CollectionEntry<"blog"> & {
   longUrl: string; // 原始的、完整的 URL
 };
 
-// 使用一个简单的内存缓存，确保在一次构建中只处理一次
-let processedPosts: ProcessedBlogEntry[] | null = null;
+// 按域名(origin)缓存，避免多域名访问时长链接被“粘住”
+const processedPostsByOrigin = new Map<string, ProcessedBlogEntry[]>();
 
 /**
  * 获取所有博客文章，并为每一篇生成短链接。
@@ -19,8 +19,10 @@ let processedPosts: ProcessedBlogEntry[] | null = null;
 export async function getAllPostsWithShortLinks(
   siteUrl: URL,
 ): Promise<ProcessedBlogEntry[]> {
-  if (processedPosts) {
-    return processedPosts;
+  const originKey = siteUrl.origin;
+  const cached = processedPostsByOrigin.get(originKey);
+  if (cached) {
+    return cached;
   }
 
   const allPosts = await getCollection(
@@ -44,9 +46,10 @@ export async function getAllPostsWithShortLinks(
     }),
   );
 
-  processedPosts = postsWithLinks.sort(
+  const processedPosts = postsWithLinks.sort(
     (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
   );
 
+  processedPostsByOrigin.set(originKey, processedPosts);
   return processedPosts;
 }
