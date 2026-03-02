@@ -103,6 +103,33 @@ const articleStructuredData = {
 const customComponents = {
   img: Figure,
 };
+
+const allPosts = await getAllPostsWithShortLinks(Astro.site!);
+const currentTags = new Set(tags);
+const currentCategories = new Set(categories);
+
+const relatedPosts = allPosts
+  .filter((p) => p.slug !== post.slug)
+  .map((p) => {
+    const pTags = p.data.tags || [];
+    const pCategories = p.data.categories || [];
+
+    const sharedTags = pTags.filter((t) => currentTags.has(t)).length;
+    const sharedCategories = pCategories.filter((c) =>
+      currentCategories.has(c),
+    ).length;
+
+    const score = sharedCategories * 3 + sharedTags * 2;
+
+    return { post: p, score };
+  })
+  .filter((item) => item.score > 0)
+  .sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return b.post.data.pubDate.valueOf() - a.post.data.pubDate.valueOf();
+  })
+  .slice(0, 5)
+  .map((item) => item.post);
 ---
 
 <Layout
@@ -216,11 +243,50 @@ const customComponents = {
     </section>
 
     <footer
-      class="mb-16 animate-fade-in no-print"
+      class="mb-12 animate-fade-in no-print"
       style="animation-delay: 0.6s;"
     >
       <PostFooter post={post} author={author} />
     </footer>
+
+    {
+      relatedPosts.length > 0 && (
+        <section class="mb-14 animate-fade-in no-print" style="animation-delay: 0.8s;">
+          <div class="rounded-2xl border border-base-content/8 bg-base-200/35 backdrop-blur-sm p-6 md:p-7">
+            <div class="mb-5 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2 text-base-content/85">
+                <i class="ri-links-line text-lg" />
+                <h3 class="text-lg font-bold">相关文章</h3>
+              </div>
+              <a href="/blog" class="text-sm text-primary hover:underline">查看更多</a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {relatedPosts.map((item) => (
+                <a
+                  href={`/blog/${item.slug}/`}
+                  class="group rounded-xl border border-base-content/8 bg-base-100/70 p-4 transition-all duration-200 hover:border-primary/30 hover:bg-base-100 hover:shadow-md"
+                >
+                  <p class="line-clamp-2 font-semibold text-base-content group-hover:text-primary transition-colors">
+                    {item.data.title}
+                  </p>
+                  <p class="mt-2 line-clamp-2 text-sm text-base-content/65">
+                    {item.data.description}
+                  </p>
+                  <div class="mt-3 flex items-center justify-between text-xs text-base-content/55">
+                    <span>{dayjs(item.data.pubDate).format("YYYY-MM-DD")}</span>
+                    <span class="inline-flex items-center gap-1 group-hover:text-primary/80">
+                      阅读
+                      <i class="ri-arrow-right-line" />
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      )
+    }
 
     <section
       class="mb-16 animate-fade-in no-print"
