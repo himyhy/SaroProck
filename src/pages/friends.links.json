@@ -1,37 +1,19 @@
 {
   "mainLinks": [
     {
-      "id": "weichky",
-      "name": "Weichky's Blog",
-      "avatar": "https://assets.weichky.com/imgs/favicon.png",
-      "desc": "物不可穷也，故受之以未济。",
-      "url": "https://blog.weichky.com",
-      "story": "一封邮件，打开了消失已久的「友人帐」的扉页。我很久以前曾默默删掉了友链页面，现在看到，一想，如果，真的是友情链接，而不是……或许也没那么糟糕。99+ 文章的博客，值得放在这里。"
-    },
-    {
-      "id": "meowlynxsea",
-      "name": "梦凌汐",
-      "avatar": "https://avatars.githubusercontent.com/u/169180836?v=4",
-      "desc": "一只来自宇宙边缘、在地球旅行的程序猫",
-      "url": "https://meowdream.cn/",
-      "story": "想了很久，不知道怎么写……对我来说，好像母亲，或者是朋友。也许，这就是稳定、安心的确定性吧。"
+      "id": "saro",
+      "name": "サン猫の時間漂流",
+      "avatar": "https://saro.pub/favicon.ico",
+      "desc": "记录技术实践与数字生活的个人博客。",
+      "url": "https://saro.pub",
+      "story": "サン猫の時間漂流是一个聚焦技术、创作与日常思考的个人站点，内容持续更新，风格稳定，适合作为长期互链伙伴。"
     }
   ],
   "secondaryLinks": [
     {
-      "id": "tnxg",
-      "name": "天翔TNXGの自留地",
-      "url": "https://www.tnxg.top"
-    },
-    {
-      "id": "yirween",
-      "name": "Yirween",
-      "url": "https://yirween.netlify.app/"
-    },
-    {
-      "id": "fanzhuo",
-      "name": "Fanzhuo",
-      "url": "https://blog.fanzhuo.xyz/"
+      "id": "saro",
+      "name": "サン猫の時間漂流",
+      "url": "https://saro.pub"
     }
   ],
   "contact": {
