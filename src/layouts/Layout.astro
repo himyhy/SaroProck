@@ -162,6 +162,7 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
     {
       structuredDataList.map((schema, index) => (
         <script
+          is:inline
           type="application/ld+json"
           set:html={JSON.stringify(schema)}
           data-schema-id={`seo-schema-${index}`}
