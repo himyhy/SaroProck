@@ -251,8 +251,17 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
     </dialog>
 
     <style is:inline>
+      .page-shell {
+        transform-origin: top center;
+        will-change: transform, filter, opacity;
+        transition:
+          transform 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+          filter 0.32s ease-out,
+          opacity 0.32s ease-out;
+      }
+
       .drawer-panel {
-        transform: translate3d(-100%, 0, 0);
+        transform: translate3d(-100%, 0, 0) scale(0.985);
         opacity: 0.94;
         will-change: transform, opacity;
         backface-visibility: hidden;
@@ -264,27 +273,48 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
 
       .drawer-backdrop {
         opacity: 0;
-        will-change: opacity;
-        transition: opacity 0.32s ease-out, background-color 0.32s ease-out;
+        backdrop-filter: blur(0px);
+        -webkit-backdrop-filter: blur(0px);
+        will-change: opacity, backdrop-filter;
+        transition:
+          opacity 0.32s ease-out,
+          background-color 0.32s ease-out,
+          backdrop-filter 0.32s ease-out;
+      }
+
+      dialog[open].mobile-drawer ~ .page-shell {
+        transform: scale(0.992);
+        filter: blur(2px);
+        opacity: 0.9;
       }
 
       dialog[open].mobile-drawer .drawer-panel {
-        transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0) scale(1);
         opacity: 1;
       }
 
       dialog[open].mobile-drawer .drawer-backdrop {
         opacity: 1;
         background-color: rgb(0 0 0 / 0.18);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+
+      dialog.mobile-drawer.is-closing ~ .page-shell {
+        transform: scale(1);
+        filter: blur(0);
+        opacity: 1;
       }
 
       dialog.mobile-drawer.is-closing .drawer-panel {
-        transform: translate3d(-100%, 0, 0);
+        transform: translate3d(-100%, 0, 0) scale(0.985);
         opacity: 0.98;
       }
 
       dialog.mobile-drawer.is-closing .drawer-backdrop {
         opacity: 0;
+        backdrop-filter: blur(0);
+        -webkit-backdrop-filter: blur(0);
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -295,14 +325,15 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
       }
     </style>
 
-    {showHero && <Hero siteDescription={SITE_DESCRIPTION} />}
+    <div class="page-shell">
+      {showHero && <Hero siteDescription={SITE_DESCRIPTION} />}
 
-    <div
-      id="main-content-grid"
-      class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
-    >
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <main class="lg:col-span-3 min-h-[60vh]">
+      <div
+        id="main-content-grid"
+        class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+      >
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <main class="lg:col-span-3 min-h-[60vh]">
           {breadcrumbs && (
             <nav
               class="flex items-center gap-2 text-sm text-base-content/60 mb-8 no-print"
@@ -355,15 +386,16 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
       </div>
     </div>
 
-    <Footer
-      author={SITE_AUTHOR}
-      twitterHandle={TWITTER_HANDLE}
-      githubUrl={GITHUB_URL}
-      telegramUrl={TELEGRAM_URL}
-    />
+      <Footer
+        author={SITE_AUTHOR}
+        twitterHandle={TWITTER_HANDLE}
+        githubUrl={GITHUB_URL}
+        telegramUrl={TELEGRAM_URL}
+      />
 
-    <BackToTop />
-    <FloatingNav />
+      <BackToTop />
+      <FloatingNav />
+    </div>
     <script is:inline>
       // 核心 UI 初始化：即使其他资源加载失败，也要保证侧边栏可用
       (function() {
