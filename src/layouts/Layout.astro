@@ -178,10 +178,10 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
       mobileDrawerId={mobileDrawerId}
     />
 
-    <dialog id={mobileDrawerId} class="modal p-0" aria-label="移动端导航">
+    <dialog id={mobileDrawerId} class="modal p-0 mobile-drawer" aria-label="移动端导航">
       <div class="flex w-screen h-[100dvh] justify-start">
         <div
-          class="w-80 max-w-[80vw] sm:max-w-sm h-full bg-base-100 shadow-2xl border-r border-base-content/10 flex flex-col drawer-panel"
+          class="w-80 max-w-[80vw] sm:max-w-sm h-full bg-base-100 shadow-xl border-r border-base-content/10 flex flex-col drawer-panel overflow-hidden"
         >
           <div class="bg-base-200/60 backdrop-blur-sm border-b border-base-content/10 p-5 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
@@ -241,7 +241,7 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
         </div>
         <button
           type="button"
-          class="flex-1 h-full bg-black/10 hover:bg-black/20 transition-colors duration-200"
+          class="flex-1 h-full drawer-backdrop bg-black/10 hover:bg-black/20 transition-colors duration-300 ease-out"
           data-close-drawer="true"
           aria-label="点击关闭导航"
         >
@@ -252,29 +252,46 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
 
     <style is:inline>
       .drawer-panel {
-        transform: translateX(-100%);
+        transform: translate3d(-100%, 0, 0);
+        opacity: 0.94;
+        will-change: transform, opacity;
+        backface-visibility: hidden;
+        transition:
+          transform 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 0.24s ease-out,
+          box-shadow 0.38s cubic-bezier(0.16, 1, 0.3, 1);
       }
-      @keyframes slideInDrawer {
-        from {
-          transform: translateX(-100%);
-        }
-        to {
-          transform: translateX(0);
-        }
+
+      .drawer-backdrop {
+        opacity: 0;
+        will-change: opacity;
+        transition: opacity 0.32s ease-out, background-color 0.32s ease-out;
       }
-      dialog[open] .drawer-panel {
-        animation: slideInDrawer 0.3s ease forwards;
+
+      dialog[open].mobile-drawer .drawer-panel {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
       }
-      @keyframes slideOutDrawer {
-        from {
-          transform: translateX(0);
-        }
-        to {
-          transform: translateX(-100%);
-        }
+
+      dialog[open].mobile-drawer .drawer-backdrop {
+        opacity: 1;
+        background-color: rgb(0 0 0 / 0.18);
       }
-      dialog .drawer-panel.animate-out {
-        animation: slideOutDrawer 0.3s ease forwards;
+
+      dialog.mobile-drawer.is-closing .drawer-panel {
+        transform: translate3d(-100%, 0, 0);
+        opacity: 0.98;
+      }
+
+      dialog.mobile-drawer.is-closing .drawer-backdrop {
+        opacity: 0;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .drawer-panel,
+        .drawer-backdrop {
+          transition: none;
+        }
       }
     </style>
 
@@ -355,16 +372,31 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
           const mobileDrawer = document.getElementById(mobileDrawerId);
           if (mobileDrawer instanceof HTMLDialogElement) {
             const panel = mobileDrawer.querySelector(".drawer-panel");
+            const backdrop = mobileDrawer.querySelector(".drawer-backdrop");
             const closeDrawer = () => {
               if (!mobileDrawer.open) return;
               if (!panel) { mobileDrawer.close(); return; }
-              panel.classList.add("animate-out");
-              const onEnd = () => {
-                panel.classList.remove("animate-out");
-                panel.removeEventListener("animationend", onEnd);
+
+              mobileDrawer.classList.add("is-closing");
+
+              let finished = false;
+              const cleanup = () => {
+                if (finished) return;
+                finished = true;
+                mobileDrawer.classList.remove("is-closing");
+                panel.removeEventListener("transitionend", onEnd);
+                backdrop?.removeEventListener("transitionend", onEnd);
                 if (mobileDrawer.open) mobileDrawer.close();
               };
-              panel.addEventListener("animationend", onEnd, { once: true });
+
+              const onEnd = (event) => {
+                if (event.target !== panel || event.propertyName !== "transform") return;
+                cleanup();
+              };
+
+              panel.addEventListener("transitionend", onEnd);
+              backdrop?.addEventListener("transitionend", onEnd);
+              window.setTimeout(cleanup, 400);
             };
 
             mobileDrawer.querySelectorAll("[data-close-drawer]").forEach(el => {
