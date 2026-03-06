@@ -2,36 +2,6 @@
 @plugin "daisyui";
 @plugin "@tailwindcss/typography";
 
-:root {
-  color-scheme: light;
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-}
-
-.glass-header {
-  background: linear-gradient(
-    135deg,
-    rgba(250, 245, 255, 0.72) 0%,
-    rgba(245, 240, 255, 0.68) 45%,
-    rgba(240, 244, 255, 0.66) 100%
-  );
-  border-bottom: 1px solid rgba(244, 208, 255, 0.3);
-  box-shadow: 0 1px 10px rgba(217, 70, 239, 0.08);
-}
-
-:root[data-theme="dark"] .glass-header {
-  background: linear-gradient(
-    135deg,
-    rgba(28, 16, 45, 0.72) 0%,
-    rgba(33, 24, 56, 0.68) 45%,
-    rgba(24, 30, 58, 0.66) 100%
-  );
-  border-bottom-color: rgba(168, 85, 247, 0.22);
-  box-shadow: 0 1px 12px rgba(76, 29, 149, 0.22);
-}
-
 .scrollbar-none {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
