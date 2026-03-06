@@ -1,11 +1,13 @@
 // src/lib/blog.ts
 import { type CollectionEntry, getCollection } from "astro:content";
+import { computeReadingStats, type ReadingStats } from "./readingMetrics";
 import { getShortLink } from "./shortlink";
 
 // 导出完整的文章数据类型，包含短链接
 export type ProcessedBlogEntry = CollectionEntry<"blog"> & {
   shortLink: string | null; // 每篇文章都会有一个短链接或 null
   longUrl: string; // 原始的、完整的 URL
+  readingStats: ReadingStats;
 };
 
 // 按域名(origin)缓存，避免多域名访问时长链接被“粘住”
@@ -38,10 +40,13 @@ export async function getAllPostsWithShortLinks(
         slug: post.slug,
       });
 
+      const readingStats = computeReadingStats(post.body);
+
       return {
         ...post,
         longUrl,
         shortLink,
+        readingStats,
       };
     }),
   );

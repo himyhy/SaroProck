@@ -100,17 +100,51 @@ function parsePagination(url: URL): { page: number; limit: number } {
   return { page, limit };
 }
 
+function buildFilterQuery(url: URL, identifierField: "slug" | "postId") {
+  const filters: any = {};
+  const dateFrom = url.searchParams.get("dateFrom");
+  const dateTo = url.searchParams.get("dateTo");
+  const postId = url.searchParams.get("postId");
+  const search = url.searchParams.get("search");
+  const onlyAdmin = url.searchParams.get("onlyAdmin") === "true";
+  const ipAddress = url.searchParams.get("ipAddress");
+
+  if (dateFrom || dateTo) {
+    filters.createdAt = {};
+    if (dateFrom) filters.createdAt.$gte = new Date(dateFrom);
+    if (dateTo) filters.createdAt.$lte = new Date(dateTo);
+  }
+
+  if (postId) {
+    filters[identifierField] = postId;
+  }
+
+  if (search) {
+    filters.$or = [
+      { email: { $regex: search, $options: "i" } },
+      { nickname: { $regex: search, $options: "i" } },
+      { username: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  if (onlyAdmin) filters.isAdmin = true;
+  if (ipAddress) filters.ip = ipAddress;
+
+  return filters;
+}
+
 async function fetchAdminComments(params: {
   commentCollection: "comments" | "telegram_comments";
   commentType: string;
   page: number;
   limit: number;
+  filters: any;
 }): Promise<{ comments: any[]; total: number; page: number; limit: number }> {
   const collection = await getCollection(params.commentCollection);
 
-  const totalCount = await collection.countDocuments();
+  const totalCount = await collection.countDocuments(params.filters);
   const results = await collection
-    .find({})
+    .find(params.filters)
     .sort({ createdAt: -1 })
     .skip((params.page - 1) * params.limit)
     .limit(params.limit)
@@ -124,6 +158,10 @@ async function fetchAdminComments(params: {
     json.identifier =
       ("slug" in comment ? comment.slug : (comment as any).postId) || "";
     json.commentType = params.commentType;
+    json.isAdmin = comment.isAdmin || false;
+    json.ip = comment.ip || "-";
+    json.ua = comment.ua || "-";
+    json.status = comment.status || "approved";
     return json;
   });
 
@@ -154,9 +192,7 @@ async function fetchPublicComments(params: {
     .map((comment) => comment._id?.toString())
     .filter(Boolean) as string[];
 
-  if (commentIds.length === 0) {
-    return [];
-  }
+  if (commentIds.length === 0) return [];
 
   const objectIds = commentIds
     .map((id) => {
@@ -252,15 +288,12 @@ async function createComment(params: {
   if (params.finalUser.website) {
     (commentData as any).website = params.finalUser.website;
   }
-
   if (params.ipAddress) {
     (commentData as any).ip = params.ipAddress;
   }
-
   if (params.userAgent) {
     (commentData as any).ua = params.userAgent;
   }
-
   if (params.commentCollection === "telegram_comments") {
     (commentData as Partial<TelegramComment>).username =
       params.finalUser.nickname;
@@ -308,6 +341,7 @@ export async function GET(context: APIContext): Promise<Response> {
         commentType,
         page,
         limit,
+        filters: buildFilterQuery(url, identifierField),
       });
 
       return new Response(JSON.stringify(result), {
@@ -349,7 +383,6 @@ export async function POST(context: APIContext): Promise<Response> {
   try {
     const data = await request.json();
     const { identifier, commentType, content, parentId, userInfo } = data;
-
     const { commentCollection, identifierField } =
       getCollectionNames(commentType);
 
@@ -475,14 +508,10 @@ export async function DELETE(context: APIContext): Promise<Response> {
     }
 
     if (allCommentIds.length > 0) {
-      await commentColl.deleteMany({
-        _id: { $in: allCommentIds },
-      });
+      await commentColl.deleteMany({ _id: { $in: allCommentIds } });
     }
 
-    await likeColl.deleteMany({
-      comment: { $in: allCommentIds },
-    });
+    await likeColl.deleteMany({ comment: { $in: allCommentIds } });
 
     return new Response(
       JSON.stringify({
@@ -494,6 +523,65 @@ export async function DELETE(context: APIContext): Promise<Response> {
   } catch (error: any) {
     logCommentsApiFailed(
       "comments_api_delete_failed",
+      context.request.url,
+      error,
+    );
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: error.message || "Server internal error",
+      }),
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(context: APIContext): Promise<Response> {
+  const adminUser = getAdminUser(context);
+  if (!adminUser) {
+    return new Response(
+      JSON.stringify({ success: false, message: "Unauthorized" }),
+      { status: 403 },
+    );
+  }
+
+  try {
+    const { commentId, isAdmin, commentType } = await context.request.json();
+    if (!commentId || typeof isAdmin !== "boolean" || !commentType) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message:
+            "Missing required fields: commentId, isAdmin, or commentType",
+        }),
+        { status: 400 },
+      );
+    }
+
+    const { commentCollection } = getCollectionNames(commentType);
+    const collection = await getCollection(commentCollection);
+    const result = await collection.updateOne(
+      { _id: toObjectId(commentId) },
+      { $set: { isAdmin, updatedAt: new Date() } },
+    );
+
+    if (result.matchedCount === 0) {
+      return new Response(
+        JSON.stringify({ success: false, message: "Comment not found" }),
+        { status: 404 },
+      );
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Comment updated successfully",
+      }),
+      { status: 200 },
+    );
+  } catch (error: any) {
+    logCommentsApiFailed(
+      "comments_api_patch_failed",
       context.request.url,
       error,
     );

@@ -1,6 +1,7 @@
 ---
 import { type CollectionEntry, getCollection } from "astro:content";
 import TOC from "@components/blog/TOC.astro";
+import { formatWordCount } from "@/lib/readingMetrics";
 import type { MarkdownHeading } from "astro";
 
 export interface Props {
@@ -45,11 +46,9 @@ const totalWords = allPosts.reduce(
   (acc: number, post: CollectionEntry<"blog">) => acc + countWords(post.body),
   0,
 );
-const formattedTotalWords =
-  totalWords > 1000 ? `${(totalWords / 1000).toFixed(1)}k` : totalWords;
 const stats = {
   articles: allPosts.length,
-  words: formattedTotalWords,
+  words: formatWordCount(totalWords),
 };
 
 const QQ_GROUP_NUMBER = "2484913990";

@@ -628,7 +628,7 @@ const Dashboard: React.FC = () => {
         快捷入口
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <a
           href="/admin/comments"
           className="btn btn-lg h-auto py-4 flex-col justify-start items-start text-left bg-base-200/60 backdrop-blur-sm border border-base-content/10 rounded-xl"
@@ -639,6 +639,42 @@ const Dashboard: React.FC = () => {
           </div>
           <p className="text-xs font-normal opacity-70 mt-1">
             管理、审核和删除所有页面的评论。
+          </p>
+        </a>
+        <a
+          href="/admin/system"
+          className="btn btn-lg h-auto py-4 flex-col justify-start items-start text-left bg-base-200/60 backdrop-blur-sm border border-base-content/10 rounded-xl"
+        >
+          <div className="flex items-center gap-2 font-bold text-lg">
+            <i className="ri-shield-flash-line" />
+            系统监控
+          </div>
+          <p className="text-xs font-normal opacity-70 mt-1">
+            实时监控系统健康状态、数据库和服务连接。
+          </p>
+        </a>
+        <a
+          href="/admin/export"
+          className="btn btn-lg h-auto py-4 flex-col justify-start items-start text-left bg-base-200/60 backdrop-blur-sm border border-base-content/10 rounded-xl"
+        >
+          <div className="flex items-center gap-2 font-bold text-lg">
+            <i className="ri-download-2-line" />
+            数据导出
+          </div>
+          <p className="text-xs font-normal opacity-70 mt-1">
+            导出评论和点赞数据为 JSON 或 CSV 格式。
+          </p>
+        </a>
+        <a
+          href="/admin/config"
+          className="btn btn-lg h-auto py-4 flex-col justify-start items-start text-left bg-base-200/60 backdrop-blur-sm border border-base-content/10 rounded-xl"
+        >
+          <div className="flex items-center gap-2 font-bold text-lg">
+            <i className="ri-settings-3-line" />
+            系统配置
+          </div>
+          <p className="text-xs font-normal opacity-70 mt-1">
+            查看系统配置、环境变量和服务状态。
           </p>
         </a>
         <div className="btn btn-lg h-auto py-4 flex-col justify-start items-start text-left rounded-xl btn-disabled">

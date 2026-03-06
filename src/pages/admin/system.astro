@@ -1,0 +1,16 @@
+---
+import SystemMonitor from "@/components/admin/SystemMonitor.tsx";
+import BaseLayout from "@/layouts/Layout.astro";
+import { getAdminUser } from "@/lib/auth";
+
+const adminUser = getAdminUser(Astro);
+if (!adminUser) {
+  return Astro.redirect(`/login?redirect=${Astro.url.pathname}`);
+}
+---
+
+<BaseLayout title="系统监控 - 管理后台">
+  <div class="container mx-auto px-4 py-8">
+    <SystemMonitor client:load />
+  </div>
+</BaseLayout>
