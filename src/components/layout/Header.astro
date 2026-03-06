@@ -24,9 +24,10 @@ const { siteTitle, navLinks = [], currentPath, mobileDrawerId } = Astro.props;
           onclick={`event.preventDefault(); document.getElementById('${mobileDrawerId}')?.showModal?.();`}
         >
           <div
-            class="w-8 h-8 rounded-xl overflow-hidden ring-1 ring-base-content/10 shadow-sm group-hover:scale-110 transition-transform duration-300 bg-base-100 p-1"
+            class="w-8 h-8 rounded-xl ring-1 ring-primary/15 shadow-sm group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-primary to-secondary text-primary-content flex items-center justify-center"
+            aria-hidden="true"
           >
-            <img src="/favicon.png" alt={siteTitle} class="w-full h-full object-contain" />
+            <span class="text-[0.7rem] font-black tracking-tight leading-none">HY</span>
           </div>
           <span
             class="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent hidden md:block"
