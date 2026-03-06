@@ -289,9 +289,9 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
       }
 
       dialog[open].mobile-drawer ~ .page-shell {
-        transform: scale(0.992);
-        filter: blur(2px);
-        opacity: 0.9;
+        transform: none;
+        filter: none;
+        opacity: 1;
       }
 
       dialog[open].mobile-drawer .drawer-panel {
@@ -307,8 +307,8 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
       }
 
       dialog.mobile-drawer.is-closing ~ .page-shell {
-        transform: scale(1);
-        filter: blur(0);
+        transform: none;
+        filter: none;
         opacity: 1;
       }
 
