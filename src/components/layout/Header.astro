@@ -11,7 +11,7 @@ const { siteTitle, navLinks = [], currentPath, mobileDrawerId } = Astro.props;
 ---
 
 <header
-  class="sticky top-0 z-50 backdrop-blur-lg bg-[linear-gradient(135deg,rgba(250,245,255,0.72)_0%,rgba(245,240,255,0.68)_45%,rgba(240,244,255,0.66)_100%)] border-b border-fuchsia-200/30 shadow-sm shadow-fuchsia-200/10 no-print"
+  class="glass-header sticky top-0 z-50 backdrop-blur-lg no-print"
 >
   <div class="max-w-6xl mx-auto px-4 sm:px-6">
     <div class="flex items-center justify-between h-14">
@@ -73,8 +73,42 @@ const { siteTitle, navLinks = [], currentPath, mobileDrawerId } = Astro.props;
           })}
         </nav>
 
+        <button
+          type="button"
+          class="theme-toggle btn btn-ghost btn-sm btn-circle border border-base-content/10 bg-base-100/40 hover:bg-base-100/60"
+          aria-label="切换夜间模式"
+          title="切换夜间模式"
+          data-theme-toggle
+        >
+          <i class="ri-moon-clear-line text-base" data-theme-icon-dark></i>
+          <i class="ri-sun-line text-base hidden" data-theme-icon-light></i>
+        </button>
+
         <SearchBar client:idle />
       </div>
     </div>
   </div>
 </header>
+
+<script is:inline>
+  (() => {
+    const syncThemeIcons = () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.querySelectorAll('[data-theme-icon-dark]').forEach((el) => el.classList.toggle('hidden', isDark));
+      document.querySelectorAll('[data-theme-icon-light]').forEach((el) => el.classList.toggle('hidden', !isDark));
+    };
+
+    const toggleTheme = () => {
+      const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      syncThemeIcons();
+    };
+
+    syncThemeIcons();
+    document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+      button.addEventListener('click', toggleTheme);
+    });
+  })();
+</script>
