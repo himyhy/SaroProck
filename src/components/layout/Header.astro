@@ -24,13 +24,16 @@ const { siteTitle, navLinks = [], currentPath, mobileDrawerId } = Astro.props;
           onclick={`event.preventDefault(); document.getElementById('${mobileDrawerId}')?.showModal?.();`}
         >
           <div
-            class="w-9 h-9 rounded-xl ring-1 ring-primary/15 shadow-sm group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-primary to-secondary text-primary-content flex items-center justify-center"
+            class="w-10 h-10 rounded-2xl ring-1 ring-primary/15 shadow-sm group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-primary to-secondary text-primary-content flex items-center justify-center"
             aria-hidden="true"
           >
-            <span class="relative flex items-center justify-center font-black leading-none select-none">
-              <span class="text-[0.92rem] tracking-[-0.12em]">H</span>
-              <span class="text-[0.92rem] tracking-[-0.14em] -ml-[0.18em] translate-y-[0.02em] opacity-95">Y</span>
-            </span>
+            <svg viewBox="0 0 24 24" class="w-[1.15rem] h-[1.15rem]" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M5 5V19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+              <path d="M5 12H12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+              <path d="M12 5V19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+              <path d="M12 12L19 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 12L19 19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </div>
           <span
             class="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent hidden md:block"
