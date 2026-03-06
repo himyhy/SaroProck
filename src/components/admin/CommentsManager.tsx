@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
 interface AdminComment {
-  objectId: string;
+  id: string;
   content: string;
   nickname: string;
   email: string;
@@ -142,7 +142,7 @@ const CommentsManager: React.FC = () => {
               </thead>
               <tbody>
                 {data.comments.map((comment) => (
-                  <tr key={comment.objectId} className="hover">
+                  <tr key={comment.id} className="hover">
                     <td>
                       <div className="font-semibold">{comment.nickname}</div>
                       <div className="text-xs opacity-60 truncate max-w-[140px]">
@@ -175,7 +175,7 @@ const CommentsManager: React.FC = () => {
                     </td>
 
                     <td className="text-center w-[120px]">
-                      {pendingDeletion?.id === comment.objectId ? (
+                      {pendingDeletion?.id === comment.id ? (
                         <div className="flex flex-col gap-1 items-center bg-error/10 p-2 rounded-lg">
                           <span className="text-xs text-error font-semibold mb-1">
                             确认删除?
@@ -184,10 +184,7 @@ const CommentsManager: React.FC = () => {
                             type="button"
                             className="btn btn-error btn-xs w-full"
                             onClick={() =>
-                              handleDelete(
-                                comment.objectId,
-                                comment.commentType,
-                              )
+                              handleDelete(comment.id, comment.commentType)
                             }
                           >
                             <i className="ri-check-line" /> 确认
@@ -206,7 +203,7 @@ const CommentsManager: React.FC = () => {
                           className="btn btn-error btn-xs"
                           onClick={() =>
                             setPendingDeletion({
-                              id: comment.objectId,
+                              id: comment.id,
                               type: comment.commentType,
                             })
                           }
