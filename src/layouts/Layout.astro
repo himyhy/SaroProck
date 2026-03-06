@@ -181,12 +181,12 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
     <dialog id={mobileDrawerId} class="modal p-0 mobile-drawer" aria-label="移动端导航">
       <div class="flex w-screen h-[100dvh] justify-start">
         <div
-          class="w-80 max-w-[80vw] sm:max-w-sm h-full bg-[linear-gradient(180deg,rgba(252,248,255,0.98)_0%,rgba(248,244,255,0.97)_100%)] shadow-2xl shadow-fuchsia-950/10 border-r border-fuchsia-100/80 flex flex-col drawer-panel overflow-hidden"
+          class="w-80 max-w-[80vw] sm:max-w-sm h-full bg-base-100 shadow-xl border-r border-base-content/10 flex flex-col drawer-panel overflow-hidden"
         >
-          <div class="bg-white/55 backdrop-blur-md border-b border-fuchsia-100/80 px-5 py-4 flex items-center justify-between shrink-0">
+          <div class="bg-base-200/60 backdrop-blur-sm border-b border-base-content/10 p-5 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
-              <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl ring-1 ring-fuchsia-400/20 shadow-sm bg-[linear-gradient(135deg,#7c3aed_0%,#a855f7_45%,#ec4899_100%)] text-white">
-                <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl ring-1 ring-fuchsia-400/20 shadow-sm bg-[linear-gradient(135deg,#7c3aed_0%,#a855f7_45%,#ec4899_100%)] text-white">
+                <svg viewBox="0 0 24 24" class="h-7 w-7" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                   <path d="M4.7 6.2V17.8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                   <path d="M4.7 12.1C5.9 11.4 7.2 11.1 8.3 11.1C9.3 11.1 10 11.4 10.8 12.3" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M11.2 6.3C11.1 10.2 11.2 14.1 11.2 17.9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
@@ -195,20 +195,20 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
                 </svg>
               </span>
               <div>
-                <p class="text-[15px] font-semibold tracking-tight">HY博客</p>
-                <p class="text-xs text-base-content/55">所有的为时已晚都是恰逢其时</p>
+                <p class="font-semibold">HY博客</p>
+                <p class="text-xs text-base-content/60">所有的为时已晚都是恰逢其时</p>
               </div>
             </div>
             <button
               type="button"
-              class="btn btn-sm btn-ghost btn-circle text-base-content/60 hover:bg-white/70 hover:text-base-content"
+              class="btn btn-sm btn-ghost btn-circle"
               aria-label="关闭导航"
               data-close-drawer="true"
             >
               ✕
             </button>
           </div>
-          <div class="p-4 space-y-5 overflow-y-auto flex-1 pb-16 custom-scrollbar">
+          <div class="p-5 space-y-6 overflow-y-auto flex-1 pb-16 custom-scrollbar">
             <nav class="flex flex-col gap-2" aria-label="主要导航">
               {navLinks.map((link) => {
                 const isActive =
@@ -219,9 +219,8 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
                   <a
                     href={link.href}
                     class:list={{
-                      "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-200": true,
-                      "bg-[linear-gradient(135deg,#7c3aed_0%,#a855f7_45%,#ec4899_100%)] text-white shadow-lg shadow-fuchsia-300/30": isActive,
-                      "text-base-content/75 hover:bg-white/75 hover:text-base-content": !isActive,
+                      "btn btn-ghost justify-start gap-3 rounded-xl": true,
+                      "btn-active btn-primary text-primary-content shadow-lg shadow-primary/20": isActive,
                     }}
                     aria-current={isActive ? "page" : undefined}
                   >
@@ -232,9 +231,9 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
               })}
             </nav>
 
-            <div class="h-px bg-gradient-to-r from-transparent via-fuchsia-200/70 to-transparent my-2" />
+            <div class="divider my-4 opacity-50" />
 
-            <div class="space-y-4 mobile-sidebar-shell">
+            <div class="space-y-4">
               <Sidebar
                 idPrefix="mobile-sidebar"
                 headings={headings}
@@ -276,25 +275,6 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
           transform 0.38s cubic-bezier(0.16, 1, 0.3, 1),
           opacity 0.24s ease-out,
           box-shadow 0.38s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-
-      .mobile-sidebar-shell :global(aside) {
-        display: block;
-      }
-
-      .mobile-sidebar-shell :global(aside > div) {
-        position: static;
-      }
-
-      .mobile-sidebar-shell :global(.bg-base-200\/40) {
-        background: rgba(255, 255, 255, 0.58) !important;
-        border-color: rgba(244, 208, 255, 0.42) !important;
-        box-shadow: 0 8px 24px rgba(168, 85, 247, 0.06);
-        backdrop-filter: blur(10px);
-      }
-
-      .mobile-sidebar-shell :global(.bg-base-100) {
-        background: rgba(255, 255, 255, 0.72) !important;
       }
 
       .drawer-backdrop {
