@@ -159,7 +159,13 @@ const CommentsManager: React.FC = () => {
 
                     <td>
                       <a
-                        href={`/${comment.commentType === "telegram" ? "post" : "blog"}/${comment.identifier}`}
+                        href={
+                          comment.commentType === "telegram"
+                            ? `/post/${comment.identifier}`
+                            : comment.identifier === "guestbook"
+                              ? "/guestbook"
+                              : `/blog/${comment.identifier}`
+                        }
                         target="_blank"
                         rel="noopener noreferrer"
                         className="link link-primary text-xs hover:underline"
