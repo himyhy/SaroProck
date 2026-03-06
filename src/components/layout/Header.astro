@@ -24,10 +24,13 @@ const { siteTitle, navLinks = [], currentPath, mobileDrawerId } = Astro.props;
           onclick={`event.preventDefault(); document.getElementById('${mobileDrawerId}')?.showModal?.();`}
         >
           <div
-            class="w-8 h-8 rounded-xl ring-1 ring-primary/15 shadow-sm group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-primary to-secondary text-primary-content flex items-center justify-center"
+            class="w-9 h-9 rounded-xl ring-1 ring-primary/15 shadow-sm group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-primary to-secondary text-primary-content flex items-center justify-center"
             aria-hidden="true"
           >
-            <span class="text-[0.7rem] font-black tracking-tight leading-none">HY</span>
+            <span class="relative flex items-center justify-center font-black leading-none select-none">
+              <span class="text-[0.92rem] tracking-[-0.12em]">H</span>
+              <span class="text-[0.92rem] tracking-[-0.14em] -ml-[0.18em] translate-y-[0.02em] opacity-95">Y</span>
+            </span>
           </div>
           <span
             class="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent hidden md:block"
