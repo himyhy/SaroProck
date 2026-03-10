@@ -7,6 +7,18 @@ export interface Props {
 }
 
 const { siteDescription } = Astro.props;
+
+// 显示层支持两行简介：优先按“第一句句号（。）”分行（不影响 <meta name="description">）
+const splitDescription = () => {
+  const idx = siteDescription.indexOf("。");
+  if (idx === -1) return { line1: siteDescription, line2: "" };
+
+  const line1 = siteDescription.slice(0, idx + 1);
+  const line2 = siteDescription.slice(idx + 1).trim();
+  return { line1, line2 };
+};
+
+const { line1, line2 } = splitDescription();
 ---
 
 <section class="relative overflow-hidden">
@@ -31,7 +43,13 @@ const { siteDescription } = Astro.props;
         class="text-lg text-base-content/80 mb-10 leading-relaxed"
         transition:animate="slide"
       >
-        {siteDescription}
+        {line1}
+        {line2 && (
+          <>
+            <br />
+            {line2}
+          </>
+        )}
       </p>
 
       <div class="flex justify-center gap-4" transition:animate="fade">
