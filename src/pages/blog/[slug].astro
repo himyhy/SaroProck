@@ -113,7 +113,7 @@ const relatedPosts = allPosts
     if (b.score !== a.score) return b.score - a.score;
     return b.post.data.pubDate.valueOf() - a.post.data.pubDate.valueOf();
   })
-  .slice(0, 5)
+  .slice(0, 4)
   .map((item) => item.post);
 ---
 
