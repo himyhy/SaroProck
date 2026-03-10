@@ -33,7 +33,10 @@ const showBefore = showPagination;
 const hasInfoBlock = !!q || !!before || !!after;
 ---
 
-<Layout title="首页">
+<Layout
+  title="首页"
+  description="HY博客，一座偏僻的数字花园。这里有技术笔记与实践的枝叶，也有生活碎片的落影；让记录慢慢发声，让沉默有处安放。"
+>
   <TelegramLayout>
     {
       hasInfoBlock && (
