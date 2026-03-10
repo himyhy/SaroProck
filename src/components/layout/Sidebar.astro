@@ -1,8 +1,8 @@
 ---
 import { type CollectionEntry, getCollection } from "astro:content";
 import TOC from "@components/blog/TOC.astro";
-import { formatWordCount } from "@/lib/readingMetrics";
 import type { MarkdownHeading } from "astro";
+import { formatWordCount } from "@/lib/readingMetrics";
 
 export interface Props {
   author: string;

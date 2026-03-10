@@ -1,5 +1,5 @@
-import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
+import type { APIRoute } from "astro";
 
 export const prerender = true;
 
@@ -8,7 +8,7 @@ function escapeXml(value: string) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
 
@@ -19,13 +19,22 @@ export const GET: APIRoute = async ({ site }) => {
 
   const posts = await getCollection("blog", ({ data }) => !data.draft);
 
-  const staticPaths = ["/", "/blog/", "/guestbook/", "/friends/", "/post/", "/rss.xml"];
+  const staticPaths = [
+    "/",
+    "/blog/",
+    "/guestbook/",
+    "/friends/",
+    "/post/",
+    "/rss.xml",
+  ];
 
   const urls: Array<{ loc: string; lastmod?: string }> = [
     ...staticPaths.map((path) => ({ loc: new URL(path, site).toString() })),
     ...posts.map((post) => ({
       loc: new URL(`/blog/${post.slug}/`, site).toString(),
-      lastmod: post.data.pubDate ? new Date(post.data.pubDate).toISOString() : undefined,
+      lastmod: post.data.pubDate
+        ? new Date(post.data.pubDate).toISOString()
+        : undefined,
     })),
   ];
 
@@ -33,7 +42,8 @@ export const GET: APIRoute = async ({ site }) => {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls
   .map(
-    (u) => `  <url>\n    <loc>${escapeXml(u.loc)}</loc>${u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : ""}\n  </url>`,
+    (u) =>
+      `  <url>\n    <loc>${escapeXml(u.loc)}</loc>${u.lastmod ? `\n    <lastmod>${u.lastmod}</lastmod>` : ""}\n  </url>`,
   )
   .join("\n")}
 </urlset>`;

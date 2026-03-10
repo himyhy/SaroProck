@@ -31,13 +31,20 @@ async function getRepoStars(): Promise<number | null> {
       headers.Authorization = `Bearer ${token.trim()}`;
     }
 
-    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-      headers,
-    });
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}`,
+      {
+        headers,
+      },
+    );
 
     if (!response.ok) {
       // 未配置 token 或 token 无效时，静默降级，避免构建日志持续 401 噪音
-      if (response.status === 401 || response.status === 403 || response.status === 429) {
+      if (
+        response.status === 401 ||
+        response.status === 403 ||
+        response.status === 429
+      ) {
         cachedData = { stars: null, timestamp: Date.now() };
         return null;
       }

@@ -1,6 +1,6 @@
 // src/components/comments/CommentsWrapper.tsx
 import type React from "react";
-import { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 
 const CommentForm = lazy(() => import("./CommentForm"));
 const CommentList = lazy(() => import("./CommentList"));
