@@ -8,14 +8,27 @@ export interface Props {
 
 const { siteDescription } = Astro.props;
 
-// 显示层支持两行简介：优先按“第一句句号（。）”分行（不影响 <meta name="description">）
+// 显示层支持两行简介：
+// 1) 若包含“。”：按第一句句号分行
+// 2) 否则若包含“这里”：在“这里”前分行
+// （不影响 <meta name="description">）
 const splitDescription = () => {
   const idx = siteDescription.indexOf("。");
-  if (idx === -1) return { line1: siteDescription, line2: "" };
+  if (idx !== -1) {
+    const line1 = siteDescription.slice(0, idx + 1);
+    const line2 = siteDescription.slice(idx + 1).trim();
+    return { line1, line2 };
+  }
 
-  const line1 = siteDescription.slice(0, idx + 1);
-  const line2 = siteDescription.slice(idx + 1).trim();
-  return { line1, line2 };
+  const marker = "这里";
+  const markerIdx = siteDescription.indexOf(marker);
+  if (markerIdx !== -1) {
+    const line1 = siteDescription.slice(0, markerIdx).trim();
+    const line2 = siteDescription.slice(markerIdx).trim();
+    return { line1, line2 };
+  }
+
+  return { line1: siteDescription, line2: "" };
 };
 
 const { line1, line2 } = splitDescription();
