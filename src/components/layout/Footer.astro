@@ -73,10 +73,14 @@ const formattedStars = formatStars(starCount);
 
 // 定义链接，方便管理
 const navLinks = [
-  { href: "/", text: "动态" },
-  { href: "/blog", text: "博客" },
-  { href: "/random", text: "漂流" },
-  { href: "https://github.com/himyhy/SaroProck", text: "仓库" },
+  { href: "/", text: "动态", icon: "ri-home-5-line" },
+  { href: "/blog", text: "博客", icon: "ri-article-line" },
+  { href: "/random", text: "漂流", icon: "ri-shuffle-line" },
+  {
+    href: "https://github.com/himyhy/SaroProck",
+    text: "仓库",
+    icon: "ri-github-line",
+  },
 ];
 
 const socialLinks = [
@@ -141,8 +145,9 @@ const socialLinks = [
           <ul class="space-y-3">
             {navLinks.map((link) => (
               <li>
-                <a href={link.href} class="text-sm text-base-content/70 hover:text-primary hover:translate-x-1 inline-block transition-all duration-200">
-                  {link.text}
+                <a href={link.href} class="flex items-center gap-2 text-sm text-base-content/70 hover:text-primary hover:translate-x-1 transition-all duration-200">
+                  <i class={`${link.icon} text-lg opacity-50`} />
+                  <span>{link.text}</span>
                 </a>
               </li>
             ))}
