@@ -1,0 +1,263 @@
+---
+title: Vaultwarden（Docker）怎么查看版本并升级？一套可复制的更新流程（已打码）
+description: 以 Docker Compose 部署为例，讲清 Vaultwarden 如何查看当前版本、pull 最新镜像、重建容器完成升级，并处理 compose version 过时与 ADMIN_TOKEN 明文告警。
+pubDate: 2026-03-15
+tags:
+  - Vaultwarden
+  - Bitwarden
+  - Docker
+  - Docker Compose
+  - 运维
+  - 更新
+categories:
+  - 技术
+draft: false
+---
+
+> 说明：本文为可公开发布的“已打码”教程。
+>
+> - 域名、主机名、真实目录、容器 ID、时间戳、Token/密钥等信息均已替换为示例值。
+> - 命令输出为示例输出，仅用于帮助你识别成功/失败状态。
+
+Vaultwarden（非官方 Bitwarden 服务端实现）用 Docker/Compose 部署后，升级维护的核心目标只有三个：
+
+1) **版本可核对**（升级前后都能确认版本变化）
+2) **数据不丢**（卷挂载目录可备份、可恢复）
+3) **变更可回滚**（至少能退回到上一个镜像/配置）
+
+下面按一套“可复制”的流程来做。
+
+---
+
+## 0）前提：确认你有 Docker 权限
+
+先试：
+
+```bash
+docker ps
+```
+
+- 能输出容器列表：权限 OK
+- 若报 `permission denied`：用 `sudo` 或切 root
+
+常用（切 root）：
+
+```bash
+sudo -i
+```
+
+---
+
+## 1）进入 compose 目录
+
+找到放着 `docker-compose.yml` 的目录（示例：`/opt/vaultwarden`）：
+
+```bash
+cd /opt/vaultwarden
+ls
+```
+
+一般会看到：
+
+- `docker-compose.yml`
+- `vw-data/`（Vaultwarden 数据目录，示例名）
+
+> 你的实际数据目录以 compose 里 `volumes:` 挂载为准。
+
+---
+
+## 2）查看 Vaultwarden 与 Web-Vault 版本（最准确）
+
+直接在容器里查：
+
+```bash
+docker exec -it vaultwarden /vaultwarden --version
+```
+
+示例输出：
+
+```text
+Vaultwarden 1.35.3
+Web-Vault 2026.1.1
+```
+
+- `Vaultwarden`：后端服务版本
+- `Web-Vault`：网页端静态资源版本
+
+---
+
+## 3）（强烈建议）升级前备份数据目录
+
+如果你是这样挂载的（示意）：
+
+```yaml
+volumes:
+  - ./vw-data:/data
+```
+
+那么在 compose 目录下打包备份即可：
+
+```bash
+tar -czf vw-data-backup-$(date +%F).tgz vw-data
+```
+
+> 升级通常很稳，但备份是“低成本保险”。
+
+---
+
+## 4）拉取最新镜像
+
+如果你的 compose 使用 `latest`：
+
+```yaml
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+```
+
+那么更新时拉取最新镜像：
+
+```bash
+docker compose pull
+```
+
+### 常见提示：`version is obsolete`
+
+你可能会看到：
+
+```text
+the attribute `version` is obsolete, it will be ignored
+```
+
+这表示 Docker Compose v2 不再需要顶层 `version: "3"`，会忽略它。
+
+- **不影响运行**
+- 想消除提示：把 `docker-compose.yml` 顶层的 `version: "3"` 删除即可
+
+---
+
+## 5）用新镜像重建并后台启动
+
+```bash
+docker compose up -d
+```
+
+如果输出里出现 `Recreated` / `Started`，通常表示已成功用新镜像重建。
+
+---
+
+## 6）验收：看日志 + 再查一次版本
+
+看启动日志（示例取最后 50 行）：
+
+```bash
+docker logs -n 50 vaultwarden
+```
+
+很多版本会在启动 banner 里显示，例如：
+
+```text
+Starting Vaultwarden
+Version 1.35.4
+```
+
+再查一次版本确认：
+
+```bash
+docker exec -it vaultwarden /vaultwarden --version
+```
+
+示例：
+
+```text
+Vaultwarden 1.35.4
+Web-Vault 2026.1.1
+```
+
+---
+
+## 7）（可选）清理旧镜像，释放磁盘
+
+```bash
+docker image prune -f
+```
+
+这会清理“未被引用”的镜像层，不影响正在运行的容器。
+
+---
+
+## 8）安全加固：把 ADMIN_TOKEN 从明文改为 Argon2 哈希（推荐）
+
+如果日志出现类似提示：
+
+```text
+You are using a plain text ADMIN_TOKEN which is insecure.
+```
+
+说明你在 compose 里配置了明文管理员 Token。建议改为 **Argon2 PHC 哈希**，降低配置泄露风险。
+
+### 8.1 生成 Argon2 哈希
+
+在服务器上执行（会提示你输入原始 token；**不要把 token/哈希粘贴到公开场合**）：
+
+```bash
+docker exec -it vaultwarden /vaultwarden hash
+```
+
+会输出形如：
+
+```text
+$argon2id$v=19$m=65540,t=3,p=4$...$...
+```
+
+### 8.2 替换 compose 里的 ADMIN_TOKEN
+
+把（示意）：
+
+```yaml
+environment:
+  ADMIN_TOKEN: "你的明文token"
+```
+
+替换为：
+
+```yaml
+environment:
+  ADMIN_TOKEN: "$argon2id$..."
+```
+
+然后应用变更：
+
+```bash
+docker compose up -d
+```
+
+---
+
+## 9）最小化“升级 SOP”（你可以贴到运维手册里）
+
+```bash
+cd /opt/vaultwarden
+
+docker exec -it vaultwarden /vaultwarden --version
+
+tar -czf vw-data-backup-$(date +%F).tgz vw-data
+
+docker compose pull
+docker compose up -d
+
+docker logs -n 50 vaultwarden
+docker exec -it vaultwarden /vaultwarden --version
+```
+
+---
+
+## 结语
+
+Vaultwarden 的 Docker 升级并不复杂，关键在于：
+
+- 升级前后都要 **核对版本**
+- 数据卷要 **可备份**
+- 对外发布文档要 **打码**（域名/主机名/目录/Token 全部不要出现）
+
+如果你希望更可控的升级策略（避免 `latest` 带来不可预期变更），建议把镜像 tag 固定为明确版本号，并在测试环境验证后再滚动到生产。
