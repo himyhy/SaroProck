@@ -252,6 +252,94 @@ docker exec -it vaultwarden /vaultwarden --version
 
 ---
 
+## 10）常见故障：升级后突然打不开（ERR_TIMED_OUT / 只看到 SYN 没有 SYN-ACK）
+
+这一类问题**非常像应用挂了**，但实际上经常是「云厂商的安全 sysctl 配置 + Docker 端口转发」组合导致的网络层问题。
+
+典型症状：
+
+- 浏览器访问 `https://pass.example.com` 直接 **ERR_TIMED_OUT**
+- 服务器本机 `curl -I https://127.0.0.1 -H 'Host: pass.example.com'` 能返回 200（说明 nginx/Vaultwarden 正常）
+- 抓包只看到外网 `SYN` 进来，但服务器没有回 `SYN-ACK`
+
+### 10.1 快速定位思路（建议按顺序走）
+
+1) **确认容器与端口监听**
+
+```bash
+docker ps
+ss -lntp | egrep ':80|:443'
+```
+
+2) **确认本机（内网 IP）443 正常**（以云主机网卡 IP 为例）
+
+```bash
+curl -kIv https://10.0.0.2 --connect-timeout 3
+```
+
+3) **确认 DNAT 是否在工作**（外网访问一次后看计数器是否增长）
+
+```bash
+nft list chain ip nat DOCKER
+```
+
+如果 `tcp dport 443 ... dnat to 172.xx.xx.xx:443` 的 `counter packets` 会增长，说明外网请求已到达并进入 DNAT。
+
+4) **抓包判断是否回 SYN-ACK**
+
+```bash
+tcpdump -ni <nic> 'tcp port 443 and (tcp[tcpflags] & (tcp-syn|tcp-ack) != 0)'
+```
+
+只有 `SYN` 没有 `SYN-ACK`，基本就是系统层转发/过滤问题。
+
+### 10.2 云主机常见根因：`ip_forward=0`
+
+不少云镜像会通过安全策略把 IPv4 转发关掉（例如存在类似 `60-*-network-security.conf` 的 sysctl 文件），而 Docker 的端口转发/桥接依赖它。
+
+检查：
+
+```bash
+sysctl net.ipv4.ip_forward
+```
+
+如果输出是 `net.ipv4.ip_forward = 0`，就会出现「DNAT 计数器涨，但流量进不了容器网桥」的情况，外网访问自然超时。
+
+临时修复（立刻生效，无需重启）：
+
+```bash
+sysctl -w net.ipv4.ip_forward=1
+```
+
+如果系统没有 `/proc/sys/net/bridge/*` 相关项，说明 `br_netfilter` 未加载；可按需加载并启用：
+
+```bash
+modprobe br_netfilter
+sysctl -w net.bridge.bridge-nf-call-iptables=1
+```
+
+#### 永久化（推荐）
+
+```bash
+cat >/etc/sysctl.d/99-docker-forwarding.conf <<'EOF'
+net.ipv4.ip_forward=1
+net.bridge.bridge-nf-call-iptables=1
+EOF
+
+sysctl --system
+```
+
+以及让模块开机自动加载：
+
+```bash
+cat >/etc/modules-load.d/br_netfilter.conf <<'EOF'
+br_netfilter
+EOF
+```
+
+> 注意：以上为公开教程示例。实际环境请结合你的安全策略评估是否需要同时启用 `bridge-nf-call-ip6tables` 等选项。
+
+---
 ## 结语
 
 Vaultwarden 的 Docker 升级并不复杂，关键在于：
