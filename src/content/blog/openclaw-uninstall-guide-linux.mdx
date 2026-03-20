@@ -1,9 +1,10 @@
 ---
 title: OpenClaw 彻底卸载（install.sh 安装 / Linux）
-description: 用 openclaw uninstall 一键彻底清理 OpenClaw；并解释它到底删了什么、为什么还要 npm rm -g，以及 hash -r 是什么。
+description: 本教程采用 Linux 服务器部署方式，给出 OpenClaw 的安装与彻底卸载流程；并解释卸载输出、npm 卸载与 hash -r 的含义。
 pubDate: 2026-03-20
 tags:
   - OpenClaw
+  - 安装
   - 卸载
   - 运维
   - Linux
@@ -12,17 +13,56 @@ categories:
 draft: false
 ---
 
-如果你是通过官方脚本安装的：
+> 本教程采用 **Linux 服务器**部署方式。
+>
+> 不建议把 OpenClaw 作为“常用 Windows 桌面软件”来安装运行：一方面 Windows 环境下的网络/权限/守护进程模型更复杂；另一方面聊天/网关类服务通常涉及密钥与持久化数据，**更推荐放在独立服务器或 WSL2** 中集中管理，降低日常桌面环境的意外风险。
+
+## 推荐服务器（示例）
+
+如果你需要一台长期运行的网关主机，可以参考：
+
+- 腾讯云：<https://cloud.tencent.com/act/pro/spring2026>
+- 阿里云（轻量应用服务器）：<https://www.aliyun.com/benefit/scene/swas>
+
+> 选型建议：优先选择干净的 Ubuntu LTS / Debian 基础镜像，不要用第三方“魔改一键镜像”。
+
+---
+
+## 安装（macOS/Linux/WSL2 统一采用 install.sh）
+
+我们采用官方脚本安装：
 
 ```bash
 curl -fsSL https://openclaw.ai/install.sh | bash
 ```
 
+安装完成后建议运行新手引导（会配置认证、Gateway，并可安装守护进程/服务）：
+
+```bash
+openclaw onboard --install-daemon
+```
+
+检查网关状态：
+
+```bash
+openclaw gateway status
+```
+
+打开控制面板（最快开始聊天/调试）：
+
+```bash
+openclaw dashboard
+```
+
+---
+
+## 卸载（彻底清除：包含 ~/.openclaw 数据）
+
 在 Linux 上“彻底卸载”（包括 `~/.openclaw` 数据目录）最省心的方法就是用 OpenClaw 自带的卸载器。
 
-> 本文默认你想**彻底清除**（含 `~/.openclaw`）。如果你只想删除 CLI 但保留数据，请不要运行带 `--all` 的命令。
+> 如果你只想删除 CLI 但保留数据，请不要运行带 `--all` 的命令。
 
-## 1) 一条命令彻底卸载（推荐）
+### 1) 一条命令彻底卸载（推荐）
 
 ```bash
 openclaw uninstall --all --yes --non-interactive
@@ -34,9 +74,9 @@ openclaw uninstall --all --yes --non-interactive
 - `--yes`：默认确认
 - `--non-interactive`：非交互模式，适合在 SSH / 自动化里跑
 
-## 2) 这条命令到底删了什么？
+### 2) 这条命令到底删了什么？
 
-你会看到类似输出（已脱敏主机名）：
+你会看到类似输出（示例已脱敏主机名）：
 
 ```text
 🦞 OpenClaw 2026.2.17 (4134875) — Chat APIs that don't require a Senate hearing.
@@ -55,48 +95,44 @@ CLI still installed. Remove via npm/pnpm if desired.
 
 2. `Removed systemd service: /root/.config/systemd/user/openclaw-gateway.service`
    - 删除该服务的 unit 文件。
-   - 结果：以后不会再“自动启动 Gateway”。
+   - 结果：以后不会再自动启动 Gateway。
 
 3. `Removed ~/.openclaw`
    - 删除 OpenClaw 的默认**状态目录**（state dir）。
    - 这里通常包含配置、运行状态、日志、插件数据、缓存等。
 
 4. `Removed ~/.openclaw/workspace`
-   - 删除 OpenClaw 默认工作区（你的智能体文件、技能、可能的项目文件等）。
+   - 删除 OpenClaw 默认工作区（智能体文件、技能、以及你放在其中的项目文件等）。
 
 5. `CLI still installed...`
-   - 说明：卸载器帮你把“服务”和“数据”清了，但**openclaw 这个命令本体**还在（通常是通过 npm 全局安装的）。
+   - 说明：卸载器帮你把“服务”和“数据”清了，但 `openclaw` 这个命令本体还在（通常是通过 npm 全局安装的）。
 
-## 3) 把 CLI 也卸载掉（真正“一个不剩”）
+### 3) 把 CLI 也卸载掉（真正“一个不剩”）
 
-如果你是脚本安装（install.sh），CLI 大概率是 npm 全局装的，直接执行：
+脚本安装（install.sh）一般会通过 npm 全局安装 CLI，直接执行：
 
 ```bash
 npm rm -g openclaw
 hash -r
 ```
 
-### 为什么是两个命令？`hash -r` 是什么？
+#### 为什么是两个命令？`hash -r` 是什么？
 
 - `npm rm -g openclaw`：卸载 OpenClaw CLI（从 npm 全局目录移除）。
-- `hash -r`：让当前 shell **清空命令路径缓存**。
-  - 一些 shell 会把你运行过的命令路径缓存起来。
-  - 你刚卸载完 `openclaw`，如果不清缓存，偶尔会出现“看起来还找得到命令/提示怪异”的情况。
-  - 不想用 `hash -r` 也可以：**重新开一个终端**再验证。
+- `hash -r`：让当前 shell 清空“命令路径缓存”，避免出现刚卸载完却还提示能找到命令的错觉。
+  - 不想执行 `hash -r` 也可以：重新开一个终端再验证。
 
-## 4) 验证是否卸载干净
+### 4) 验证是否卸载干净
 
 ```bash
 command -v openclaw || echo "openclaw not found"
 openclaw --version
 ```
 
-- `command -v openclaw` 如果输出为空并打印 `openclaw not found`，说明 PATH 下已找不到命令。
-- `openclaw --version` 应该会报 `command not found`（这是预期结果）。
+- `command -v openclaw` 输出为空并打印 `openclaw not found`：说明 PATH 下已找不到命令。
+- `openclaw --version` 报 `command not found`：这是预期结果。
 
-## 5) 常见坑与补充
+### 5) 常见坑与补充
 
 - **多 Profile 情况**：如果你使用过 `--profile` / `OPENCLAW_PROFILE`，状态目录可能是 `~/.openclaw-<profile>`，需要对每个 profile 目录分别清理。
 - **远程模式**：状态目录在运行 Gateway 的那台机器上；卸载也需要在那台机器上操作。
-
-到这里，OpenClaw 的服务、数据目录、以及 CLI 都会被彻底移除。需要重新安装时，再跑一次官方安装脚本即可。
