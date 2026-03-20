@@ -1,0 +1,102 @@
+---
+title: OpenClaw 彻底卸载（install.sh 安装 / Linux）
+description: 用 openclaw uninstall 一键彻底清理 OpenClaw；并解释它到底删了什么、为什么还要 npm rm -g，以及 hash -r 是什么。
+pubDate: 2026-03-20
+tags:
+  - OpenClaw
+  - 卸载
+  - 运维
+  - Linux
+categories:
+  - 技术
+draft: false
+---
+
+如果你是通过官方脚本安装的：
+
+```bash
+curl -fsSL https://openclaw.ai/install.sh | bash
+```
+
+在 Linux 上“彻底卸载”（包括 `~/.openclaw` 数据目录）最省心的方法就是用 OpenClaw 自带的卸载器。
+
+> 本文默认你想**彻底清除**（含 `~/.openclaw`）。如果你只想删除 CLI 但保留数据，请不要运行带 `--all` 的命令。
+
+## 1) 一条命令彻底卸载（推荐）
+
+```bash
+openclaw uninstall --all --yes --non-interactive
+```
+
+参数含义：
+
+- `--all`：卸载服务 + 删除状态/数据目录（包括 `~/.openclaw`）
+- `--yes`：默认确认
+- `--non-interactive`：非交互模式，适合在 SSH / 自动化里跑
+
+## 2) 这条命令到底删了什么？
+
+你会看到类似输出（已脱敏主机名）：
+
+```text
+🦞 OpenClaw 2026.2.17 (4134875) — Chat APIs that don't require a Senate hearing.
+
+Stopped systemd service: openclaw-gateway.service
+Removed systemd service: /root/.config/systemd/user/openclaw-gateway.service
+Removed ~/.openclaw
+Removed ~/.openclaw/workspace
+CLI still installed. Remove via npm/pnpm if desired.
+```
+
+逐行解释：
+
+1. `Stopped systemd service: openclaw-gateway.service`
+   - 停止 **systemd 用户级**服务，确保网关进程不再运行。
+
+2. `Removed systemd service: /root/.config/systemd/user/openclaw-gateway.service`
+   - 删除该服务的 unit 文件。
+   - 结果：以后不会再“自动启动 Gateway”。
+
+3. `Removed ~/.openclaw`
+   - 删除 OpenClaw 的默认**状态目录**（state dir）。
+   - 这里通常包含配置、运行状态、日志、插件数据、缓存等。
+
+4. `Removed ~/.openclaw/workspace`
+   - 删除 OpenClaw 默认工作区（你的智能体文件、技能、可能的项目文件等）。
+
+5. `CLI still installed...`
+   - 说明：卸载器帮你把“服务”和“数据”清了，但**openclaw 这个命令本体**还在（通常是通过 npm 全局安装的）。
+
+## 3) 把 CLI 也卸载掉（真正“一个不剩”）
+
+如果你是脚本安装（install.sh），CLI 大概率是 npm 全局装的，直接执行：
+
+```bash
+npm rm -g openclaw
+hash -r
+```
+
+### 为什么是两个命令？`hash -r` 是什么？
+
+- `npm rm -g openclaw`：卸载 OpenClaw CLI（从 npm 全局目录移除）。
+- `hash -r`：让当前 shell **清空命令路径缓存**。
+  - 一些 shell 会把你运行过的命令路径缓存起来。
+  - 你刚卸载完 `openclaw`，如果不清缓存，偶尔会出现“看起来还找得到命令/提示怪异”的情况。
+  - 不想用 `hash -r` 也可以：**重新开一个终端**再验证。
+
+## 4) 验证是否卸载干净
+
+```bash
+command -v openclaw || echo "openclaw not found"
+openclaw --version
+```
+
+- `command -v openclaw` 如果输出为空并打印 `openclaw not found`，说明 PATH 下已找不到命令。
+- `openclaw --version` 应该会报 `command not found`（这是预期结果）。
+
+## 5) 常见坑与补充
+
+- **多 Profile 情况**：如果你使用过 `--profile` / `OPENCLAW_PROFILE`，状态目录可能是 `~/.openclaw-<profile>`，需要对每个 profile 目录分别清理。
+- **远程模式**：状态目录在运行 Gateway 的那台机器上；卸载也需要在那台机器上操作。
+
+到这里，OpenClaw 的服务、数据目录、以及 CLI 都会被彻底移除。需要重新安装时，再跑一次官方安装脚本即可。
