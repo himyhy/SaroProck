@@ -35,6 +35,15 @@ code {
   line-height: 1.5;
 }
 
+.prose p,
+.prose li,
+.prose blockquote,
+.prose a,
+.prose code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .saro-code {
   @apply relative my-6 rounded-xl border border-base-content/20 bg-transparent overflow-hidden;
 }
