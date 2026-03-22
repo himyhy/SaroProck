@@ -54,6 +54,144 @@ openclaw gateway status
 openclaw dashboard
 ```
 
+### 一次真实安装记录：首次配置时会遇到什么？
+
+上面几条命令适合“快速装好”，但第一次真正跑 `openclaw onboard --install-daemon` 时，通常还会遇到一串交互式问题。下面补一份实战记录，基本就是新手第一次安装时最容易卡住的地方。
+
+#### 1. Onboarding 模式怎么选？
+
+安装向导里如果看到：
+
+- `personal-by-default ... Continue?` → 选 `Yes`
+- `Onboarding mode` → 选 `QuickStart`
+
+`QuickStart` 的意思是先把主流程跑通，细节后面再用配置命令慢慢补。第一次安装不建议直接走 `Manual`。
+
+#### 2. 模型提供商怎么选？
+
+如果你使用的是国内可用的 Z.AI 配置，常见选择会是：
+
+- `Model/auth provider` → `Z.AI`
+- `Z.AI auth method` → `CN (Z.AI CN / open.bigmodel.cn)`
+
+如果后面提示：
+
+- `Paste API key now`
+- `Use external secret provider`
+
+个人机器或自己的 VPS，直接选 `Paste API key now` 最省事；但 **API Key 不要截图、不要发到聊天记录里**。
+
+#### 3. 渠道怎么选？
+
+如果你是想接飞书，QuickStart 里可以直接选：
+
+- `Select channel` → `Feishu/Lark (飞书)`
+
+随后会安装插件、要求填写：
+
+- `App ID`
+- `App Secret`
+
+这里最重要的一点是：
+
+- **国内飞书** → 用 `open.feishu.cn` 创建应用，并配置 `domain: "feishu"`
+- **国际版 Lark** → 用 `open.larksuite.com`，配置 `domain: "lark"`
+
+这个地方一旦选错，最典型的现象就是：
+
+- Dashboard 看起来正常
+- 插件也加载了
+- 但在飞书里 @机器人 或私聊它时 **完全没反应**
+
+如果你用的是国内飞书，必须确保最终配置走的是 **Feishu 国内版**，不要误选 Lark 国际版。
+
+#### 4. 飞书应用本身还要开什么？
+
+在飞书开放平台里，至少要确认这些点：
+
+- 创建的是 **企业自建应用**
+- 已开启 **机器人能力**
+- 事件订阅使用 **长连接（WebSocket）**
+- 已添加事件：`im.message.receive_v1`
+- 应用已经 **发布**，而不是只保存在草稿态
+
+如果这些没配好，也会出现“机器人加进群了，但就是不回”的情况。
+
+#### 5. Dashboard 明明开了，为什么还是连不上？
+
+首次安装时，另一个常见坑是：
+
+- 浏览器里能打开 Dashboard 页面
+- 但页面提示 `disconnected (1000): no reason`
+
+实战里这不一定代表 OpenClaw 没启动。更常见的是：
+
+- 浏览器缓存了旧 token / 旧会话状态
+- 普通窗口里站点缓存脏了
+- 前端连接状态冲突
+
+一个很实用的排查办法是：
+
+- **直接用无痕/隐私窗口打开 Dashboard**
+
+如果无痕模式能正常连接，而普通窗口不行，那通常不是服务端故障，而是浏览器本地缓存问题。把 `localhost:18789` 或 `127.0.0.1:18789` 的站点数据清掉，再重开就行。
+
+#### 6. 看起来没问题，为什么飞书还是不回复？
+
+如果私聊机器人后，它返回一段类似下面的内容：
+
+```text
+access not configured
+Pairing code: XXXXXXXX
+```
+
+这说明飞书链路其实已经通了，只是当前账号还没有被授权。此时需要在服务器上执行配对批准命令：
+
+```bash
+openclaw pairing approve feishu <配对码>
+```
+
+批准后，再回飞书私聊机器人发一句“你好”，通常就能正常对话了。
+
+#### 7. 如何确认 Gateway 真的在跑？
+
+如果你怀疑 OpenClaw 没起来，可以优先看这几条：
+
+```bash
+openclaw status
+openclaw gateway status
+ss -lntp | grep 18789
+```
+
+只要看到 `127.0.0.1:18789` 正在监听，说明 Gateway 进程已经在本机跑起来了。此时再遇到 Dashboard 连不上、SSH 转发异常、页面断开等问题，就应该优先排查：
+
+- token 是否对应当前网关
+- SSH 隧道是否还活着
+- 浏览器缓存是否干净
+
+#### 8. 飞书能跑起来，不代表配置就安全
+
+第一次为了“先跑通”，很多人会把群策略设成：
+
+```json
+"groupPolicy": "open"
+```
+
+这样测试很方便，但正式使用前一定要重新收紧。典型风险包括：
+
+- 任意群成员在群里触发机器人
+- 高风险工具暴露给群聊上下文
+- Prompt Injection 造成越权操作
+
+更稳妥的做法是：
+
+- 群聊改成 `allowlist`
+- 只允许指定群使用
+- 群环境里禁掉高风险工具
+- 私聊继续保留配对或白名单机制
+
+也就是说，**安装跑通只是第一步，安全收口才是真正上线前必须补的那一步**。
+
 ---
 
 ## 卸载（彻底清除：包含 ~/.openclaw 数据）
