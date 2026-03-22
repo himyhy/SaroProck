@@ -54,17 +54,13 @@ openclaw gateway status
 openclaw dashboard
 ```
 
-第一次真正跑 `openclaw onboard --install-daemon` 时，除了安装命令本身，还会经历一轮交互式配置。按实战经验，首次安装时可以直接按下面这套思路走：
+第一次真正跑 `openclaw onboard --install-daemon` 时，还会经历一轮交互式配置。首次安装时，通常可以按下面这套思路来选：
 
-- `personal-by-default ... Continue?` → 选 `Yes`
-- `Onboarding mode` → 选 `QuickStart`
-- `Model/auth provider` → 如果你使用的是 Z.AI，就选 `Z.AI`
-- `Z.AI auth method` → 选 `CN (Z.AI CN / open.bigmodel.cn)`
-- `How do you want to provide this API key?` → 选 `Paste API key now`
-
-这样做的核心思路只有一个：**先把 OpenClaw 跑起来，复杂配置后面再补。**
-
-其中 `QuickStart` 很适合第一次安装，因为它优先帮你完成主流程；相比之下，`Manual` 更适合已经熟悉 OpenClaw 配置结构的人。API Key 直接粘贴也是最省事的方式，但需要特别注意：**密钥不要截图、不要发进聊天记录，也不要长期暴露在共享终端里。**
+- `personal-by-default ... Continue?` → 选 `Yes`，按个人使用场景继续。
+- `Onboarding mode` → 选 `QuickStart`，先把主流程跑通，细节后面再配。
+- `Model/auth provider` → 如果你用的是 Z.AI，就选 `Z.AI`。
+- `Z.AI auth method` → 选 `CN (Z.AI CN / open.bigmodel.cn)`。
+- `How do you want to provide this API key?` → 选 `Paste API key now`，直接写入配置，适合个人 VPS；但不要泄露 API Key。
 
 安装完成后，建议立刻用下面几条命令确认网关是否真的起来了：
 
