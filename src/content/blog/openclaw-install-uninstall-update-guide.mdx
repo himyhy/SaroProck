@@ -171,6 +171,40 @@ npx -y @tencent-weixin/openclaw-weixin-cli@latest install
 
 按这套流程走通之后，就说明微信通道已经接入成功，可以正常通过微信和 OpenClaw 对话。
 
+#### QQ
+
+腾讯现已正式宣布 QQ 开放平台接入 OpenClaw，整体部署流程也比较直接。
+
+第一步，登录 QQ 开放平台：
+
+- <https://q.qq.com/>
+
+进入对应入口后创建机器人，拿到自己的 `AppID` 和 `AppSecret`。
+
+接入 OpenClaw 时，常用步骤可以直接概括为下面三条命令：
+
+1. 安装 OpenClaw 社区 QQBot 插件：
+
+```bash
+openclaw plugins install @sliverp/qqbot@latest
+```
+
+2. 配置并绑定当前 QQ 机器人：
+
+```bash
+openclaw channels add --channel qqbot --token "AppID:AppSecret"
+```
+
+这里的 `AppID:AppSecret` 要替换成你自己的实际凭据，不要直接照抄示例。
+
+3. 重启本地 OpenClaw 服务：
+
+```bash
+openclaw gateway restart
+```
+
+完成后，就可以在 QQ 侧测试机器人是否已经能正常接收并回复消息。
+
 ### 基础使用教程
 
 #### OpenClaw 安装后的基本结构
