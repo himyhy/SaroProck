@@ -154,12 +154,20 @@ openclaw pairing approve feishu <配对码>
 npx -y @tencent-weixin/openclaw-weixin-cli@latest install
 ```
 
+![OpenClaw 连接微信文档提示](photo/openclaw-install-uninstall-update-guide/wechat-step-1-plugin-doc.jpg)
+
 执行后，终端会安装微信插件，并进入扫码登录流程。此时不要急着关掉终端，按提示继续即可。通常流程是：
 
 1. 在终端里等待二维码输出。
 2. 用微信扫一扫二维码。
 3. 在微信页面里点绿色的“连接”按钮，确认把 OpenClaw 绑定到微信。
 4. 连接完成后，在微信里发一条测试消息，例如 `hello world`，确认机器人已经能正常回复。
+
+![微信插件安装与扫码登录终端输出](photo/openclaw-install-uninstall-update-guide/wechat-step-2-terminal-install.png)
+
+![微信内点击“连接”按钮](photo/openclaw-install-uninstall-update-guide/wechat-step-3-connect-button.jpg)
+
+![微信中测试消息已成功回复](photo/openclaw-install-uninstall-update-guide/wechat-step-4-success-reply.jpg)
 
 按这套流程走通之后，就说明微信通道已经接入成功，可以正常通过微信和 OpenClaw 对话。
 
