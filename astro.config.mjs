@@ -21,7 +21,29 @@ export default defineConfig({
     plugins: [tailwindcss()],
   },
 
-  integrations: [expressiveCode(), mdx(), react(), sitemap(), compress(), terser({ compress: true, mangle: true }), icon()],
+  integrations: [
+    expressiveCode(),
+    mdx(),
+    react(),
+    sitemap({
+      filter: (page) => {
+        const { pathname } = new URL(page);
+        return ![
+          "/admin/",
+          "/admin/comments/",
+          "/admin/config/",
+          "/admin/export/",
+          "/admin/system/",
+          "/login/",
+          "/random/",
+        ].includes(pathname);
+      },
+      customPages: ["https://www.bcd.moe/rss.xml"],
+    }),
+    compress(),
+    terser({ compress: true, mangle: true }),
+    icon(),
+  ],
   markdown: {
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex],
