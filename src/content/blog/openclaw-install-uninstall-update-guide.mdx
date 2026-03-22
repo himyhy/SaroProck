@@ -171,6 +171,36 @@ npx -y @tencent-weixin/openclaw-weixin-cli@latest install
 
 按这套流程走通之后，就说明微信通道已经接入成功，可以正常通过微信和 OpenClaw 对话。
 
+### 基础使用教程
+
+#### OpenClaw 安装后的基本结构
+
+OpenClaw 装好之后，最常接触到的通常不是一大堆复杂目录，而是几个核心文件和路径：
+
+- `~/.openclaw/openclaw.json`：主配置文件，渠道、模型、网关、工具权限等基本都在这里配。
+- `~/.openclaw/workspace/`：默认工作区，平时的项目、技能、文档和一些自定义内容一般都放这里。
+- `~/.openclaw/workspace/MEMORY.md`：长期记忆文件，用来记录稳定偏好、长期项目背景、关键决策。
+- `~/.openclaw/workspace/memory/`：日常记忆目录，适合按日期记录临时进展、当天事项和阶段性信息。
+- `~/.openclaw/extensions/`：已安装插件目录，例如飞书、微信、QQBot 这类渠道插件通常会出现在这里。
+
+如果只是个人使用，实际最需要先认识的就是：**配置文件 `openclaw.json`、工作区 `workspace/`，以及长期记忆文件 `MEMORY.md`。**
+
+#### 常用命令
+
+OpenClaw 装好之后，日常最常用的命令和消息操作通常包括这些：
+
+- `/new`：开启一个新会话。
+- `/reset`：重置当前会话。
+- `/status`：查看当前状态。
+- `openclaw status`：查看整体状态、Gateway、渠道、会话等概况。
+- `openclaw gateway status`：查看网关状态。
+- `openclaw gateway restart`：重启网关。
+- `openclaw dashboard`：打开控制面板。
+- `openclaw dashboard --no-open`：只输出 Dashboard 地址和 token，适合远程服务器场景。
+- `openclaw logs --follow`：实时查看日志，排查渠道不回复、插件报错、连接失败等问题时很有用。
+
+如果只是刚装好，最实用的一套顺序通常是：先看 `openclaw status`，再试 `openclaw dashboard`，最后在实际渠道里发一条消息验证是否已经能正常回复。
+
 ---
 
 ## 更新
