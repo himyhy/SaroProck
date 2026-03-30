@@ -10,12 +10,8 @@ const { media, postId } = Astro.props;
 
 if (!media || media.length === 0) return null;
 
-// 图片预览优先使用原图地址，避免缩略图在卡片/弹窗中被放大后发糊
-const previewSource = media[0].type === "image"
-  ? media[0].url
-  : (media[0].thumbnail || media[0].url);
-
-const coverImage = previewSource.replace(
+// 取第一张图作为预览封面
+const coverImage = (media[0].thumbnail || media[0].url).replace(
   /https:\/\/(cdn\d+\.telesco\.pe|cdn\d+\.cdn-telegram\.org)/g,
   "https://tg-proxy.031003.xyz/$&",
 );
@@ -23,17 +19,14 @@ const coverImage = previewSource.replace(
 
 <div class="media-preview-card not-prose mt-3">
   <button
-    class="relative w-full h-40 sm:h-44 md:h-52 rounded-xl overflow-hidden border border-base-content/10 bg-base-300/30"
+    class="relative w-full h-36 rounded-xl overflow-hidden border border-base-content/10"
     onclick={`document.getElementById('viewer-${postId}').showModal()`}
     aria-label={`查看全部 ${media.length} 个媒体文件`}
   >
     <img
       src={coverImage}
       alt="媒体预览"
-      loading="lazy"
-      decoding="async"
-      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 720px"
-      class="w-full h-full object-contain transition-transform duration-300 hover:scale-[1.02]"
+      class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
     />
     <div
       class="absolute inset-0 bg-black/30 hover:bg-black/40 cursor-zoom-in transition-colors duration-300 flex flex-col items-center justify-center text-white"
@@ -84,9 +77,6 @@ const coverImage = previewSource.replace(
                 <img
                   src={item.url.replace(/https:\/\/(cdn\d+\.telesco\.pe|cdn\d+\.cdn-telegram\.org)/g, 'https://tg-proxy.031003.xyz/$&')}
                   alt={item.alt || "Image content"}
-                  loading="lazy"
-                  decoding="async"
-                  sizes="100vw"
                   class="max-w-full max-h-full object-contain"
                 />
               ) : (
