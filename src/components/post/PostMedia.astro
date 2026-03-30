@@ -27,6 +27,8 @@ if (!media || media.length === 0) return null;
               alt={item.alt || "Image content"}
               class="max-w-full max-h-full w-auto h-auto object-contain"
               loading="lazy"
+              decoding="async"
+              sizes="100vw"
             />
           ) : (
             <video
