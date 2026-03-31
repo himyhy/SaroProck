@@ -60,6 +60,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const socialImageURL = new URL(image, Astro.site);
 const currentPath = Astro.url.pathname;
 const mobileDrawerId = "mobile-drawer";
+const isHomePage = currentPath === "/";
 
 const navLookup = new Map(navLinks.map((link) => [link.href, link.label]));
 
@@ -337,7 +338,11 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
 
       <div
         id="main-content-grid"
-        class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+        class:list={{
+          "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8": true,
+          "py-8": !isHomePage,
+          "pt-16 pb-8 md:pt-24 md:pb-10": isHomePage,
+        }}
       >
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <main class="lg:col-span-3 min-h-[60vh]">
