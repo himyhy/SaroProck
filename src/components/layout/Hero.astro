@@ -83,18 +83,20 @@ const { line1, line2 } = splitDescription();
       </div>
 
       <div
-        class="mt-12 flex flex-wrap items-center justify-center gap-3 text-sm text-base-content/70"
+        class="mt-12 flex items-center justify-center space-x-6 text-sm text-base-content/60"
         transition:animate="fade"
       >
-        <span class="rounded-full border border-primary/12 bg-base-100/45 px-4 py-2 backdrop-blur-sm">前端开发</span>
-        <span class="rounded-full border border-secondary/12 bg-base-100/45 px-4 py-2 backdrop-blur-sm">AI / 自动化</span>
-        <span class="rounded-full border border-accent/12 bg-base-100/45 px-4 py-2 backdrop-blur-sm">数字花园</span>
+        <div class="flex items-center space-x-2">
+          <Icon name="ri:map-pin-line" class="w-4 h-4 text-primary" />
+          <span>数字世界</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <Icon name="ri:time-line" class="w-4 h-4 text-primary" />
+          <span>持续更新</span>
+        </div>
       </div>
     </div>
   </div>
-
-  <div class="pointer-events-none absolute inset-x-0 bottom-0 h-32 md:h-40 bg-gradient-to-b from-transparent via-base-100/45 to-base-100"></div>
-  <div class="pointer-events-none absolute left-1/2 bottom-0 h-24 w-[34rem] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"></div>
 </section>
 
 <style>

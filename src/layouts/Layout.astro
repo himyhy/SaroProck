@@ -60,7 +60,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const socialImageURL = new URL(image, Astro.site);
 const currentPath = Astro.url.pathname;
 const mobileDrawerId = "mobile-drawer";
-const isHomePage = currentPath === "/";
 
 const navLookup = new Map(navLinks.map((link) => [link.href, link.label]));
 
@@ -381,7 +380,7 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
           <slot />
         </main>
 
-        <div class:list={{"hidden lg:block lg:col-span-1": true, "xl:block": isHomePage, "lg:hidden": isHomePage}}>
+        <div class="hidden lg:block lg:col-span-1">
           <Sidebar
             idPrefix="desktop-sidebar"
             headings={headings}
@@ -458,10 +457,6 @@ const structuredDataList = [websiteSchema, breadcrumbSchema, structuredData]
       /* 优化滚动条在国内旧版浏览器的表现 */
       .custom-scrollbar::-webkit-scrollbar { width: 4px; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-    </style>
-  </body>
-</html>
-der-radius: 10px; }
     </style>
   </body>
 </html>
