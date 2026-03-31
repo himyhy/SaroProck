@@ -37,6 +37,10 @@ const hasInfoBlock = !!q || !!before || !!after;
   title="首页"
   description="HY博客，一座偏僻的数字花园 这里有技术笔记与实践的枝叶，也有生活碎片的落影；让记录慢慢发声，让沉默有处安放"
 >
+  <section class="mb-18 md:mb-24">
+    <BlogPreview />
+  </section>
+
   <TelegramLayout>
     {
       hasInfoBlock && (
