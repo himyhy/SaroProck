@@ -3,7 +3,7 @@
 export const ADMIN_USER = {
   nickname: "HY",
   email: "myhywo@gmail.com",
-  website: "https://bcd.moe",
+  website: "https://www.bcd.moe",
   avatar: "/avatar.webp",
 };
 
