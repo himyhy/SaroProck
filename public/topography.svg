@@ -10,16 +10,16 @@
   <g stroke="url(#line)" stroke-linecap="round">
 
     <!-- 水平波浪线（每条终点 y = 起点 y，保证垂直平铺接缝完全对齐） -->
-    <path d="M0 200 C400 80 800 320 1200 200" stroke-width="2"/>
-    <path d="M0 400 C400 280 800 520 1200 400" stroke-width="2.2"/>
-    <path d="M0 600 C400 480 800 720 1200 600" stroke-width="2"/>
-    <path d="M0 800 C400 680 800 920 1200 800" stroke-width="2.2"/>
-    <path d="M0 1000 C400 880 800 1120 1200 1000" stroke-width="2"/>
+    <path d="M0 200 C400 80 800 320 1200 200" stroke-width="1.5"/>
+    <path d="M0 400 C400 280 800 520 1200 400" stroke-width="1.6"/>
+    <path d="M0 600 C400 480 800 720 1200 600" stroke-width="1.5"/>
+    <path d="M0 800 C400 680 800 920 1200 800" stroke-width="1.6"/>
+    <path d="M0 1000 C400 880 800 1120 1200 1000" stroke-width="1.5"/>
 
     <!-- 垂直波浪线（每条终点 x = 起点 x，保证水平平铺接缝完全对齐） -->
-    <path d="M300 0 C180 400 420 800 300 1200" stroke-width="2"/>
-    <path d="M600 0 C480 400 720 800 600 1200" stroke-width="2.2"/>
-    <path d="M900 0 C780 400 1020 800 900 1200" stroke-width="2"/>
+    <path d="M300 0 C180 400 420 800 300 1200" stroke-width="1.5"/>
+    <path d="M600 0 C480 400 720 800 600 1200" stroke-width="1.6"/>
+    <path d="M900 0 C780 400 1020 800 900 1200" stroke-width="1.5"/>
 
   </g>
 </svg>
