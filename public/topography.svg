@@ -1,25 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" fill="none">
   <defs>
     <linearGradient id="line" x1="0" y1="0" x2="1200" y2="1200" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#7C3AED" stop-opacity="0.18"/>
-      <stop offset="0.5" stop-color="#A855F7" stop-opacity="0.14"/>
-      <stop offset="1" stop-color="#EC4899" stop-opacity="0.10"/>
+      <stop stop-color="#7C3AED" stop-opacity="0.35"/>
+      <stop offset="0.5" stop-color="#A855F7" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#EC4899" stop-opacity="0.22"/>
     </linearGradient>
   </defs>
   <rect width="1200" height="1200" fill="transparent"/>
   <g stroke="url(#line)" stroke-linecap="round">
 
-    <!-- 水平波浪线（每条终点 y = 起点 y，保证垂直平铺接缝完全对齐） -->
-    <path d="M0 200 C400 80 800 320 1200 200" stroke-width="1.8"/>
-    <path d="M0 400 C400 280 800 520 1200 400" stroke-width="2"/>
-    <path d="M0 600 C400 480 800 720 1200 600" stroke-width="1.8"/>
-    <path d="M0 800 C400 680 800 920 1200 800" stroke-width="2"/>
-    <path d="M0 1000 C400 880 800 1120 1200 1000" stroke-width="1.8"/>
+    <!-- 水平波浪线 -->
+    <path d="M0 100 C300 0 900 200 1200 100" stroke-width="1.8"/>
+    <path d="M0 250 C300 150 900 350 1200 250" stroke-width="2"/>
+    <path d="M0 400 C300 300 900 500 1200 400" stroke-width="1.8"/>
+    <path d="M0 550 C300 450 900 650 1200 550" stroke-width="2"/>
+    <path d="M0 700 C300 600 900 800 1200 700" stroke-width="1.8"/>
+    <path d="M0 850 C300 750 900 950 1200 850" stroke-width="2"/>
+    <path d="M0 1000 C300 900 900 1100 1200 1000" stroke-width="1.8"/>
+    <path d="M0 1150 C300 1050 900 1250 1200 1150" stroke-width="2"/>
 
-    <!-- 垂直波浪线（每条终点 x = 起点 x，保证水平平铺接缝完全对齐） -->
-    <path d="M300 0 C180 400 420 800 300 1200" stroke-width="1.8"/>
-    <path d="M600 0 C480 400 720 800 600 1200" stroke-width="2"/>
-    <path d="M900 0 C780 400 1020 800 900 1200" stroke-width="1.8"/>
+    <!-- 垂直波浪线 -->
+    <path d="M200 0 C100 300 300 900 200 1200" stroke-width="1.8"/>
+    <path d="M500 0 C400 300 600 900 500 1200" stroke-width="2"/>
+    <path d="M800 0 C700 300 900 900 800 1200" stroke-width="1.8"/>
+    <path d="M1100 0 C1000 300 1200 900 1100 1200" stroke-width="2"/>
 
   </g>
 </svg>
