@@ -1,0 +1,765 @@
+---
+title: Spring Boot + uni-app + Docker 实现 ERP/MES 生产协同轻量化 APP
+description: 面向制造业订单与生产协同场景，开发轻量化APP打通ERP/MES数据流，实现订单同步、生产进度反馈、库存联动与移动端展示。
+pubDate: 2026-04-18
+tags:
+  - Spring Boot
+  - uni-app
+  - Docker
+  - ERP
+  - MES
+  - 生产协同
+categories:
+  - 技术
+  - 项目实战
+draft: false
+---
+
+## 一、项目背景
+
+本项目面向制造业订单与生产协同场景，主要解决业务订单与生产数据之间的信息流转问题。
+
+目标是开发一个轻量化 APP，与 ERP、MES 系统进行数据互通，实现：
+
+1. 订单同步
+2. 生产进度反馈
+3. 库存联动
+4. 异常 / 待办展示
+5. 移动端数据查看与上报
+
+项目最终实现了一个最小可用版本 MVP，打通了：
+
+> 订单进入系统 → 生产进度上报 → 订单状态流转 → 库存自动更新 → 移动端展示
+
+---
+
+## 二、技术选型
+
+### 后端技术
+
+| 技术 | 作用 |
+|------|------|
+| Java | 后端开发语言 |
+| Spring Boot | 搭建 RESTful API 服务 |
+| Spring Data JPA | 数据库 ORM 映射 |
+| MySQL | 存储订单、生产进度、库存数据 |
+| Docker | 容器化部署后端服务与数据库 |
+| JSON | 前后端数据交互格式 |
+| RESTful API | 提供移动端与外部系统调用接口 |
+
+### 前端 / APP 技术
+
+| 技术 | 作用 |
+|------|------|
+| uni-app | 开发轻量化移动端 APP |
+| Vue | 页面开发与数据绑定 |
+| uni.request | 调用后端接口 |
+| HBuilderX | uni-app 开发与打包工具 |
+
+---
+
+## 三、项目功能设计
+
+### 1. 订单管理
+
+订单模块主要负责订单的新增、查询、删除和状态展示。
+
+已实现功能：
+
+- 新增订单
+- 查询订单列表
+- 查询待办订单
+- 查询异常订单
+- 删除订单
+- 根据订单状态进行展示
+
+订单状态包括：
+
+- 待生产
+- 生产中
+- 已完成
+- 异常
+
+---
+
+### 2. 生产进度反馈
+
+生产进度模块用于记录生产现场的上报数据。
+
+移动端可以选择订单并填写：
+
+- 完成数量
+- 状态
+- 备注
+
+其中状态主要包括：
+
+- 生产中
+- 异常
+
+系统根据上报的完成数量进行累计判断。
+
+例如：
+
+订单数量为 500。
+
+第一次上报 200：
+
+```text
+累计完成数量 = 200
+订单总数量 = 500
+订单状态 = 生产中
+```
+
+第二次再上报 300：
+
+```text
+累计完成数量 = 500
+订单总数量 = 500
+订单状态 = 已完成
+```
+
+这样可以避免出现“只完成一部分，订单却直接变成已完成”的问题。
+
+---
+
+### 3. 库存联动
+
+当生产进度上报后，系统会根据完成数量更新库存。
+
+当前采用分批入库逻辑：
+
+* 每次上报有效完成数量后，库存增加对应数量
+* 当累计完成数量达到订单数量后，订单状态改为已完成
+
+库存字段主要包括：
+
+* 产品编码
+* 产品名称
+* 库存数量
+* 更新时间
+
+---
+
+### 4. 异常 / 待办展示
+
+首页显示两个关键指标：
+
+* 待办订单数
+* 异常订单数
+
+其中：
+
+```text
+待办订单 = 待生产 + 生产中
+异常订单 = 异常
+```
+
+移动端首页每次返回时都会重新刷新数据，保证统计信息实时更新。
+
+---
+
+### 5. ERP / MES 模拟接口
+
+为了模拟 ERP 和 MES 系统对接，项目提供了两个同步接口：
+
+| 接口 | 作用 |
+|------|------|
+| `/sync/erp/order` | 模拟 ERP 同步订单 |
+| `/sync/mes/report` | 模拟 MES 同步生产进度 |
+
+后续如果对接真实 SAP、用友或 MES 系统，可以将这些接口替换为真实 API 对接或中间表同步。
+
+---
+
+## 四、数据库设计
+
+项目使用 MySQL 存储业务数据。
+
+### 1. 订单表 `order_info`
+
+主要字段：
+
+| 字段 | 说明 |
+|------|------|
+| id | 主键 |
+| order_no | 订单号 |
+| product_name | 产品名称 |
+| quantity | 订单数量 |
+| status | 订单状态 |
+| customer_name | 客户名称 |
+| create_time | 创建时间 |
+
+---
+
+### 2. 生产进度表 `production_report`
+
+主要字段：
+
+| 字段 | 说明 |
+|------|------|
+| id | 主键 |
+| order_no | 订单号 |
+| completed_qty | 完成数量 |
+| report_status | 上报状态 |
+| remark | 备注 |
+| report_time | 上报时间 |
+
+---
+
+### 3. 库存表 `inventory_info`
+
+主要字段：
+
+| 字段 | 说明 |
+|------|------|
+| id | 主键 |
+| product_code | 产品编码 |
+| product_name | 产品名称 |
+| stock_qty | 库存数量 |
+| update_time | 更新时间 |
+
+---
+
+## 五、后端接口设计
+
+后端统一返回格式如下：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {}
+}
+```
+
+### 1. 订单接口
+
+| 方法 | 接口 | 说明 |
+|------|------|------|
+| GET | `/orders` | 查询全部订单 |
+| GET | `/orders/{id}` | 根据 ID 查询订单 |
+| GET | `/orders/orderNo/{orderNo}` | 根据订单号查询订单 |
+| GET | `/orders/pending` | 查询待办订单 |
+| GET | `/orders/exception` | 查询异常订单 |
+| POST | `/orders` | 新增订单 |
+| PUT | `/orders/{id}/status` | 修改订单状态 |
+| DELETE | `/orders/{id}` | 删除订单 |
+
+---
+
+### 2. 生产进度接口
+
+| 方法 | 接口 | 说明 |
+|------|------|------|
+| GET | `/reports` | 查询全部生产进度 |
+| GET | `/reports/orderNo/{orderNo}` | 查询某订单的生产进度 |
+| POST | `/reports` | 上报生产进度 |
+
+---
+
+### 3. 库存接口
+
+| 方法 | 接口 | 说明 |
+|------|------|------|
+| GET | `/inventory` | 查询库存列表 |
+| GET | `/inventory/{id}` | 根据 ID 查询库存 |
+| POST | `/inventory` | 新增库存 |
+| PUT | `/inventory/{id}` | 修改库存 |
+
+---
+
+### 4. ERP / MES 模拟同步接口
+
+| 方法 | 接口 | 说明 |
+|------|------|------|
+| POST | `/sync/erp/order` | 模拟 ERP 同步订单 |
+| POST | `/sync/mes/report` | 模拟 MES 同步生产进度 |
+
+---
+
+## 六、后端核心业务逻辑
+
+### 1. 生产进度累计判断
+
+生产进度上报后，后端会查询该订单所有进度记录，并累计完成数量。
+
+核心逻辑：
+
+```java
+List<ProductionReport> reportList = productionReportRepository.findByOrderNo(report.getOrderNo());
+
+int totalCompletedQty = reportList.stream()
+    .mapToInt(item -> item.getCompletedQty() == null ? 0 : item.getCompletedQty())
+    .sum();
+
+int orderQty = orderInfo.getQuantity() == null ? 0 : orderInfo.getQuantity();
+
+if (orderQty > 0 && totalCompletedQty >= orderQty) {
+    orderInfo.setStatus("已完成");
+} else {
+    orderInfo.setStatus("生产中");
+}
+```
+
+这样可以保证只有累计完成数量达到订单数量时，订单才真正变为已完成。
+
+---
+
+### 2. 异常优先处理
+
+如果上报状态为异常，系统会直接将订单状态改为异常，不再继续执行库存更新逻辑。
+
+```java
+if ("异常".equals(reportStatus)) {
+    orderInfo.setStatus("异常");
+    orderInfoRepository.save(orderInfo);
+    return savedReport;
+}
+```
+
+这样可以避免异常订单误入库。
+
+---
+
+### 3. 库存联动
+
+当上报数量有效时，系统会自动更新库存。
+
+```java
+int addQty = report.getCompletedQty() == null ? 0 : report.getCompletedQty();
+
+if (addQty > 0) {
+    inventoryInfo.setStockQty(inventoryInfo.getStockQty() + addQty);
+    inventoryInfo.setUpdateTime(LocalDateTime.now());
+    inventoryInfoRepository.save(inventoryInfo);
+}
+```
+
+---
+
+## 七、移动端 APP 开发
+
+移动端使用 uni-app 开发，主要包括以下页面：
+
+### 1. 首页
+
+首页展示：
+
+* 待办订单数
+* 异常订单数
+* 订单列表入口
+* 进度上报入口
+* 库存查询入口
+
+为了避免从其他页面返回首页后数据不刷新，首页同时使用：
+
+```js
+onLoad() {
+    this.loadData()
+}
+
+onShow() {
+    this.loadData()
+}
+```
+
+这样每次页面显示时都会重新请求最新数据。
+
+---
+
+### 2. 订单列表页
+
+订单列表页展示：
+
+* 订单号
+* 产品名称
+* 数量
+* 客户名称
+* 订单状态
+
+同时支持：
+
+* 新增订单
+* 删除订单
+
+删除订单时增加二次确认，避免误删。
+
+---
+
+### 3. 新增订单页
+
+新增订单页支持填写：
+
+* 订单号
+* 产品名称
+* 数量
+* 客户名称
+
+提交后调用：
+
+```text
+POST /orders
+```
+
+新增成功后自动返回订单列表页。
+
+---
+
+### 4. 生产进度上报页
+
+生产进度上报页支持：
+
+* 选择订单
+* 自动显示产品名称、订单数量、当前状态
+* 填写完成数量
+* 选择状态
+* 填写备注
+
+订单选择只显示未完成订单：
+
+```text
+待生产
+生产中
+```
+
+这样可以避免对已完成订单重复上报。
+
+---
+
+### 5. 库存查询页
+
+库存页展示：
+
+* 产品编码
+* 产品名称
+* 当前库存
+* 更新时间
+
+调用接口：
+
+```text
+GET /inventory
+```
+
+---
+
+## 八、后端部署过程
+
+后端使用 Docker 部署。
+
+### 1. 本地打包 Spring Boot 项目
+
+在项目根目录执行：
+
+```bash
+.\mvnw.cmd clean package
+```
+
+打包成功后生成：
+
+```text
+target/erp-mes-0.0.1-SNAPSHOT.jar
+```
+
+### 2. 编写 Dockerfile
+
+服务器上准备 `Dockerfile`：
+
+```dockerfile
+FROM eclipse-temurin:17-jre
+
+WORKDIR /app
+
+COPY erp-mes-0.0.1-SNAPSHOT.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
+```
+
+### 3. 上传 jar 到服务器
+
+将打包好的 jar 上传到服务器目录，例如：
+
+```text
+/andocker/erp-mes
+```
+
+服务器目录结构：
+
+```text
+/andocker/erp-mes
+├── Dockerfile
+└── erp-mes-0.0.1-SNAPSHOT.jar
+```
+
+### 4. 构建 Docker 镜像
+
+进入服务器目录：
+
+```bash
+cd /andocker/erp-mes
+```
+
+构建镜像：
+
+```bash
+docker build -t erp-mes-app .
+```
+
+### 5. 运行后端容器
+
+后端程序内部端口是 8080，对外映射为 9000：
+
+```bash
+docker run -d --name erp-mes-app -p 9000:8080 erp-mes-app
+```
+
+### 6. 查看运行日志
+
+```bash
+docker logs -f erp-mes-app
+```
+
+如果看到类似：
+
+```text
+Tomcat started on port 8080
+Started ErpMesApplication
+```
+
+说明后端启动成功。
+
+### 7. 外网访问测试
+
+浏览器访问：
+
+```text
+http://服务器IP:9000/orders
+```
+
+如果返回 JSON 数据，说明部署成功。
+
+---
+
+## 九、MySQL Docker 部署
+
+MySQL 使用 Docker Compose 部署。
+
+### `docker-compose.yml`
+
+```yaml
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: erp-mes-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: erp_mes
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: app123456
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d
+```
+
+启动：
+
+```bash
+docker compose up -d
+```
+
+查看容器：
+
+```bash
+docker ps
+```
+
+---
+
+## 十、后端配置文件
+
+后端 `application.properties` 中配置 MySQL 连接：
+
+```properties
+spring.datasource.url=jdbc:mysql://服务器IP:3306/erp_mes?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+spring.datasource.username=appuser
+spring.datasource.password=app123456
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.open-in-view=false
+
+server.port=8080
+```
+
+---
+
+## 十一、前端打包成 APP
+
+前端使用 HBuilderX 进行打包。
+
+### 打包方式
+
+选择：
+
+```text
+发行 -> 原生 App 云打包
+```
+
+打包平台选择：
+
+```text
+Android
+```
+
+可以先使用测试证书生成 APK。
+
+打包完成后得到：
+
+```text
+.apk 文件
+```
+
+安装到安卓手机后即可使用。
+
+---
+
+## 十二、部署更新流程
+
+如果修改了后端代码，需要重新部署。
+
+### 1. 本地重新打包
+
+```bash
+.\mvnw.cmd clean package
+```
+
+### 2. 上传新 jar 到服务器
+
+覆盖旧的：
+
+```text
+/andocker/erp-mes/erp-mes-0.0.1-SNAPSHOT.jar
+```
+
+### 3. 重新构建镜像
+
+```bash
+cd /andocker/erp-mes
+docker build -t erp-mes-app .
+```
+
+### 4. 删除旧容器
+
+```bash
+docker stop erp-mes-app
+docker rm erp-mes-app
+```
+
+### 5. 启动新容器
+
+```bash
+docker run -d --name erp-mes-app -p 9000:8080 erp-mes-app
+```
+
+### 6. 查看日志
+
+```bash
+docker logs -f erp-mes-app
+```
+
+---
+
+## 十三、开发过程中遇到的问题
+
+### 1. 订单部分完成却直接变成已完成
+
+最开始的逻辑是只要上报状态为“已完成”，订单就直接改为已完成。
+
+后来改成根据累计完成数量判断：
+
+```text
+累计完成数量 >= 订单数量
+```
+
+订单才会真正变成已完成。
+
+### 2. 异常订单没有显示
+
+原因是前端传的状态文本不一致，比如传成了“异常数”，而后端只识别“异常”。
+
+解决方式：
+
+* 前端状态选项固定为“生产中”“异常”
+* 后端用 `"异常".equals(reportStatus)` 判断
+
+### 3. 首页返回后数据不刷新
+
+原因是首页只在 `onLoad()` 加载了一次数据。
+
+解决方式：
+
+```js
+onShow() {
+    this.loadData()
+}
+```
+
+这样每次返回首页都会重新加载统计数据。
+
+### 4. 样式类名冲突
+
+首页和订单页都使用了 `.pending` 类名，导致首页卡片文字颜色被订单页状态样式影响。
+
+解决方式是将首页样式类名改成：
+
+```css
+.pending-card
+.exception-card
+```
+
+避免样式冲突。
+
+---
+
+## 十四、项目总结
+
+本项目完成了一个 ERP/MES 生产协同系统的最小可用版本，主要实现了：
+
+* 订单管理
+* 生产进度上报
+* 库存联动
+* 待办 / 异常展示
+* ERP / MES 模拟同步接口
+* 移动端 APP 页面
+* Docker 化部署
+* 服务器远程访问
+
+项目打通了制造业订单与生产数据之间的核心业务流程，为后续接入真实 ERP、MES 系统提供了基础。
+
+后续还可以继续扩展：
+
+* 登录与权限控制
+* 真实 ERP / MES API 对接
+* 中间表同步
+* 操作日志
+* 分页查询
+* 数据统计报表
+* Nginx + HTTPS
+* 自动化部署脚本
+
+---
+
+## 十五、项目亮点
+
+1. 前后端分离设计，后端提供 RESTful API，移动端调用接口完成业务操作。
+2. 使用 Docker 部署 MySQL 和后端服务，方便迁移和维护。
+3. 设计订单状态流转逻辑，避免部分完成误判为整单完成。
+4. 支持生产进度上报和库存自动联动。
+5. 移动端优先展示待办和异常，符合轻量化 APP 使用场景。
