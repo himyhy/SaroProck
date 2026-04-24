@@ -24,17 +24,21 @@
 <script>
   const floatingNav = document.getElementById("floating-nav");
 
-  // 显示/隐藏整个浮动导航
-  window.addEventListener("scroll", () => {
+  const updateFloatingNavVisibility = () => {
     if (!floatingNav) return;
-    if (window.scrollY > 300) {
+    const threshold = Math.max(160, window.innerHeight * 0.35);
+    if (window.scrollY > threshold) {
       floatingNav.classList.remove("opacity-0", "invisible");
       floatingNav.classList.add("opacity-100", "visible");
     } else {
       floatingNav.classList.add("opacity-0", "invisible");
       floatingNav.classList.remove("opacity-100", "visible");
     }
-  });
+  };
+
+  window.addEventListener("scroll", updateFloatingNavVisibility);
+  window.addEventListener("resize", updateFloatingNavVisibility);
+  updateFloatingNavVisibility();
 </script>
 
 <style>

@@ -68,7 +68,8 @@
     }
 
     private updateVisibility(): void {
-      const shouldShow = window.scrollY > 300;
+      const threshold = Math.max(160, window.innerHeight * 0.35);
+      const shouldShow = window.scrollY > threshold;
 
       if (shouldShow !== this.isVisible) {
         this.isVisible = shouldShow;
