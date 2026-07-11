@@ -1,0 +1,511 @@
+---
+title: 2026 最新 Ollama 安装教程：Windows 自定义路径与模型迁移完整指南
+description: 详细介绍 Ollama 在 macOS、Linux 和 Windows 系统上的安装方法，重点解决 Windows 默认占用 C 盘的问题，包含程序迁移、模型目录修改、环境变量配置、常用运行命令与验证步骤。
+pubDate: 2026-07-11
+tags:
+  - Ollama
+  - 本地大模型
+  - Windows
+  - AI
+  - 教程
+  - LLM
+categories:
+  - 技术
+draft: false
+---
+
+## 前言
+
+Ollama 是目前非常流行的本地大模型运行工具。通过 Ollama，用户可以在个人电脑上快速运行 Llama、Qwen、DeepSeek、Gemma 等开源大语言模型。
+
+相比手动配置 Python 环境、CUDA、模型权重和推理框架，Ollama 的优势在于使用门槛低：
+
+```bash
+ollama run qwen2.5
+```
+
+一条命令即可下载并运行模型。
+
+不过，对于 Windows 用户来说，Ollama 有一个非常常见的问题：默认安装会将程序和模型文件都放在 C 盘。程序本体通常只有几百 MB，但模型文件往往是数 GB 到数十 GB，很容易导致 C 盘空间快速耗尽。
+
+本文将介绍 Ollama 在 macOS、Linux 和 Windows 上的安装方式，并重点说明 Windows 系统中如何自定义安装目录、迁移程序文件，以及修改模型存储路径。
+
+---
+
+## 一、macOS 与 Linux 安装方式
+
+macOS 和 Linux 的安装过程相对简单，通常不需要额外处理磁盘路径问题。
+
+### macOS 安装
+
+macOS 用户可以通过以下两种方式安装 Ollama。
+
+#### 方式一：官网下载
+
+访问 Ollama 官网下载安装包：
+
+```text
+https://ollama.com
+```
+
+下载 `.dmg` 或 `.zip` 安装包后，将 Ollama 拖入“应用程序”文件夹即可。
+
+#### 方式二：使用 Homebrew 安装
+
+如果你已经安装 Homebrew，可以直接在终端中执行：
+
+```bash
+brew install ollama
+```
+
+---
+
+### Linux 安装
+
+Linux 用户可以使用官方提供的一键安装脚本：
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+安装完成后，可以通过以下命令验证：
+
+```bash
+ollama --version
+```
+
+如果能够正常显示版本号，说明安装成功。
+
+---
+
+## 二、Windows 安装重点：避免 C 盘空间被占满
+
+Windows 下 Ollama 占用磁盘空间主要分为两部分：
+
+1. Ollama 程序本体
+2. Ollama 下载的模型文件
+
+其中，程序本体通常只占用几百 MB，而模型文件可能占用 5GB、20GB，甚至更多。因此，真正需要重点处理的是模型存储目录。
+
+不过为了让整个安装路径更清晰，建议 Windows 用户同时处理程序安装路径和模型存储路径。
+
+---
+
+## 三、方案一：安装前自定义 Ollama 程序目录
+
+如果你还没有安装 Ollama，建议直接使用命令行指定安装路径。
+
+### 1. 下载安装包
+
+访问 Ollama 官网下载 Windows 安装包：
+
+```text
+https://ollama.com
+```
+
+下载文件通常为：
+
+```text
+OllamaSetup.exe
+```
+
+### 2. 创建安装目录
+
+例如在 D 盘创建目录：
+
+```text
+D:\Ollama
+```
+
+### 3. 在安装目录打开终端
+
+将 `OllamaSetup.exe` 移动到 `D:\Ollama` 目录。
+
+然后在该目录空白处按住 `Shift`，点击鼠标右键，选择：
+
+```text
+在终端中打开
+```
+
+或：
+
+```text
+在此处打开 PowerShell 窗口
+```
+
+### 4. 执行自定义安装命令
+
+在终端中运行：
+
+```powershell
+.\OllamaSetup.exe /DIR=D:\Ollama
+```
+
+如果路径中包含空格，需要使用英文双引号：
+
+```powershell
+.\OllamaSetup.exe /DIR="D:\My Ollama"
+```
+
+等待安装完成后，Ollama 程序本体就会安装到指定目录中。
+
+---
+
+## 四、方案二：已安装用户迁移 Ollama 程序目录
+
+如果你已经使用默认方式安装了 Ollama，也可以在不重新安装的情况下迁移程序目录。
+
+### 1. 停止 Ollama 服务
+
+按下 `Win + R`，输入：
+
+```text
+services.msc
+```
+
+打开服务管理器后，找到 `Ollama` 服务，右键点击并选择“停止”。
+
+### 2. 迁移程序文件
+
+默认安装路径通常为：
+
+```text
+C:\Program Files\Ollama
+```
+
+将整个 `Ollama` 文件夹剪切到新的位置，例如：
+
+```text
+D:\Softwares\Ollama
+```
+
+### 3. 修改 Windows 服务路径
+
+按下 `Win + R`，输入：
+
+```text
+cmd
+```
+
+打开命令提示符。
+
+执行以下命令：
+
+```cmd
+sc config Ollama binPath= "D:\Softwares\Ollama\ollama app.exe"
+```
+
+需要注意：
+
+- `binPath=` 后面必须保留一个空格
+- 建议使用 `ollama app.exe`
+- 不建议直接改成 `ollama.exe serve`
+
+使用 `ollama app.exe` 可以保留右下角托盘图标，后续管理更加方便。
+
+### 4. 重启 Ollama 服务
+
+重新打开 `services.msc`，找到 `Ollama` 服务，右键选择“启动”。
+
+确认服务正常启动后，原来的安装目录即可删除。
+
+---
+
+## 五、修改 Ollama 模型存储路径
+
+无论你是否修改了程序安装路径，Ollama 下载的模型默认仍然可能存放在 C 盘用户目录中：
+
+```text
+C:\Users\你的用户名\.ollama\models
+```
+
+这才是最容易占用空间的部分。因此，修改模型存储路径是 Windows 用户必须完成的一步。
+
+建议将模型存储目录设置到空间更充足的磁盘，例如：
+
+```text
+D:\OllamaModels
+```
+
+---
+
+## 六、方法一：通过 Ollama 设置界面修改模型目录
+
+如果你使用的是带图形界面的 Ollama，可以通过设置界面修改模型路径。
+
+操作步骤如下：
+
+1. 点击任务栏右下角的 Ollama 托盘图标
+2. 打开 `Settings`
+3. 找到 `Model location`
+4. 点击 `Browse`
+5. 选择新的模型目录，例如：
+
+```text
+D:\OllamaModels
+```
+
+设置完成后，需要重启 Ollama。
+
+可以右键托盘图标，选择退出 Ollama，然后重新打开；也可以重启 Ollama 服务。
+
+---
+
+## 七、方法二：通过环境变量设置模型目录
+
+除了图形界面设置，也建议通过环境变量指定模型目录。这样配置更稳定，也更适合长期使用。
+
+### 1. 打开系统属性
+
+按下 `Win + R`，输入：
+
+```text
+sysdm.cpl
+```
+
+打开系统属性。
+
+### 2. 进入环境变量设置
+
+依次点击：
+
+```text
+高级 → 环境变量
+```
+
+### 3. 新建环境变量
+
+在“用户变量”或“系统变量”中点击“新建”。
+
+填写：
+
+```text
+变量名：OLLAMA_MODELS
+变量值：D:\OllamaModels
+```
+
+保存后，需要重启 Ollama 或重启电脑，使环境变量生效。
+
+---
+
+## 八、Ollama 常用设置建议
+
+安装完成后，可以根据实际硬件情况调整 Ollama 设置。
+
+| 设置项 | 推荐配置 | 说明 |
+|------|------|------|
+| Model location | D:\OllamaModels | 建议放在非 C 盘，避免系统盘空间不足 |
+| Cloud | 开启 | 用于连接模型库并下载模型 |
+| Auto-download updates | 开启 | 自动更新程序和模型 |
+| Expose to network | 关闭 | 新手建议关闭，只有局域网共享需求时再开启 |
+| Context length | 4k 到 32k | 根据内存容量调整，过高可能导致内存不足 |
+
+上下文长度可以参考以下建议：
+
+| 内存容量 | 建议上下文长度 |
+|------|------|
+| 8GB | 4k 或 8k |
+| 16GB | 8k 到 32k |
+| 32GB 及以上 | 可根据模型大小适当提高 |
+
+如果设置过高，可能会出现内存占用过大、模型响应变慢或运行失败等问题。
+
+---
+
+## 九、常用运行命令
+
+完成安装和模型目录配置后，就可以使用 Ollama 下载、运行和管理模型。
+
+### 1. 查看 Ollama 版本
+
+```bash
+ollama --version
+```
+
+如果能够显示版本号，说明 Ollama 命令已经可以正常使用。
+
+### 2. 下载并运行模型
+
+`ollama run` 会在本地不存在模型时自动下载模型，下载完成后直接进入对话模式。
+
+例如运行 Qwen 2.5：
+
+```bash
+ollama run qwen2.5
+```
+
+运行 Gemma 4 e4b：
+
+```bash
+ollama run gemma4:e4b
+```
+
+如果模型尚未下载，Ollama 会自动从模型库拉取对应文件。首次运行所需时间取决于模型大小和网络速度。
+
+### 3. 单独拉取模型
+
+如果你只想提前下载模型，而不立即进入对话，可以使用：
+
+```bash
+ollama pull gemma4:e4b
+```
+
+也可以下载其他模型：
+
+```bash
+ollama pull qwen2.5
+ollama pull deepseek-r1
+ollama pull llama3.2
+```
+
+### 4. 查看模型信息
+
+使用 `ollama show` 可以查看模型的基础信息、参数、模板和许可证等内容。
+
+```bash
+ollama show gemma4:e4b
+```
+
+也可以查看其他模型：
+
+```bash
+ollama show qwen2.5
+ollama show deepseek-r1
+```
+
+### 5. 查看本地已下载模型
+
+```bash
+ollama list
+```
+
+该命令会列出本地已经下载的模型，包括模型名称、ID、文件大小和更新时间。
+
+### 6. 删除不再使用的模型
+
+如果某个模型不再使用，可以删除以释放磁盘空间：
+
+```bash
+ollama rm gemma4:e4b
+```
+
+删除后，可以通过 `ollama list` 再次确认模型是否已经移除。
+
+### 7. 查看正在运行的模型
+
+```bash
+ollama ps
+```
+
+该命令可以查看当前正在运行的模型实例。
+
+### 8. 通过 API 调用模型
+
+Ollama 默认会在本地启动 API 服务，常见地址为：
+
+```text
+http://localhost:11434
+```
+
+可以使用 `curl` 测试生成接口：
+
+```bash
+curl http://localhost:11434/api/generate -d '{
+  "model": "gemma4:e4b",
+  "prompt": "请用三句话介绍 Ollama。",
+  "stream": false
+}'
+```
+
+如果返回模型生成结果，说明 Ollama 服务和模型都可以正常使用。
+
+---
+
+## 十、验证模型路径是否生效
+
+首次下载模型时，建议同时检查模型是否写入了新的目录。
+
+例如你设置的模型目录为：
+
+```text
+D:\OllamaModels
+```
+
+运行：
+
+```bash
+ollama run gemma4:e4b
+```
+
+在下载过程中，打开 `D:\OllamaModels`。如果看到目录中生成了类似以下文件夹：
+
+```text
+blobs
+manifests
+```
+
+并且文件体积不断增加，说明模型已经正确下载到了新的目录中。
+
+这表示 C 盘已经不会再被模型文件占用。
+
+---
+
+## 十一、硬件要求建议
+
+Ollama 可以在 CPU 上运行，也可以调用 GPU 加速。实际体验主要取决于模型大小、内存容量和显卡性能。
+
+### 内存建议
+
+| 模型规模 | 推荐内存 |
+|------|------|
+| 小模型 | 8GB 起步 |
+| 7B / 8B 模型 | 推荐 16GB 及以上 |
+| 32B 模型 | 推荐 32GB 及以上 |
+| 70B 模型 | 推荐 64GB 及以上 |
+
+### 显卡支持
+
+Ollama 会根据系统环境自动调用可用的硬件加速能力，例如：
+
+- NVIDIA GPU：CUDA
+- AMD GPU：ROCm
+- Apple Silicon：M 系列芯片
+- 无独立显卡：使用 CPU 运行
+
+如果没有独立显卡，Ollama 仍然可以运行，但推理速度会明显变慢。
+
+---
+
+## 十二、Windows 更新 Ollama 时的注意事项
+
+Windows 用户后续更新 Ollama 时，不建议直接双击新的安装包。
+
+如果直接运行安装程序，可能会导致安装路径重新回到 C 盘。
+
+正确做法是：将新的 `OllamaSetup.exe` 放到你自定义的安装目录中，然后再次使用带路径参数的方式安装或更新。
+
+例如：
+
+```powershell
+.\OllamaSetup.exe /DIR=D:\Ollama
+```
+
+这样可以避免更新后路径被重置。
+
+---
+
+## 总结
+
+Ollama 的安装本身并不复杂，但 Windows 用户需要特别注意存储路径问题。
+
+建议按以下顺序完成配置：
+
+1. 将 Ollama 程序安装到非 C 盘
+2. 将模型目录设置到非 C 盘
+3. 配置 `OLLAMA_MODELS` 环境变量
+4. 重启 Ollama
+5. 使用 `ollama run` 下载模型并验证目录是否生效
+
+其中最关键的是模型目录。因为真正占用大量空间的不是 Ollama 程序本体，而是下载后的模型文件。
+
+只要提前设置好模型存储路径，就可以避免 C 盘被大模型文件快速占满，也能让后续本地 AI 使用体验更加稳定。
