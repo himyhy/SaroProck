@@ -96,5 +96,9 @@
     "*.{js,jsx,ts,tsx}": [
       "biome check --config-path biome.json --write"
     ]
+  },
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": "22.x"
   }
 }
