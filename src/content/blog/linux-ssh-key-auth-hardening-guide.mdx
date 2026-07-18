@@ -158,11 +158,110 @@ ssh-keygen -t ed25519 -C "my_server_key"
 
 私钥相当于你的登录凭证，必须妥善保管。
 
-如果你希望进一步提高安全性，可以在生成密钥时设置 passphrase。这样即使私钥文件被复制，攻击者仍然需要额外的私钥密码才能使用。
+如果你希望进一步提高安全性，建议在生成密钥时设置 passphrase。这样即使私钥文件被复制，攻击者仍然需要额外的私钥密码才能使用。
 
 ---
 
-## 四、第三阶段：手动配置公钥到服务器
+## 四、私钥密码保护：为 SSH 私钥设置 passphrase
+
+SSH 密钥认证并不等于“私钥文件本身绝对安全”。如果私钥文件被他人复制，而私钥没有设置 passphrase，那么攻击者可能直接使用该私钥尝试登录你的服务器。
+
+因此，建议为重要服务器使用的私钥设置 passphrase。
+
+### 1. passphrase 的作用
+
+passphrase 可以理解为“私钥的本地解锁密码”。
+
+它不会发送到服务器，也不是服务器 root 密码。它只用于在本地解锁私钥文件。
+
+| 项目 | 作用位置 | 用途 |
+|------|------|------|
+| 服务器密码 | 服务器端 | 用于密码登录服务器 |
+| SSH 私钥 | 本地电脑 | 用于密钥认证 |
+| 私钥 passphrase | 本地电脑 | 用于解锁私钥文件 |
+
+设置 passphrase 后，即使私钥文件被误复制，攻击者仍然需要知道 passphrase 才能使用。
+
+### 2. 生成密钥时设置 passphrase
+
+执行生成密钥命令后：
+
+```bash
+ssh-keygen -t ed25519 -C "my_server_key"
+```
+
+终端会提示：
+
+```text
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+```
+
+如果你希望保护私钥，就不要直接回车，而是输入一个足够强的 passphrase。
+
+建议使用：
+
+- 至少 12 位以上
+- 包含大小写字母、数字和符号
+- 不要与服务器登录密码相同
+- 不要使用常见短语或生日等可猜测信息
+
+### 3. 为已有私钥追加或修改 passphrase
+
+如果你之前生成私钥时没有设置 passphrase，也可以后续补上。
+
+以默认私钥 `id_ed25519` 为例：
+
+```bash
+ssh-keygen -p -f ~/.ssh/id_ed25519
+```
+
+执行后会提示输入旧 passphrase。如果之前没有设置，直接回车即可。
+
+然后输入新的 passphrase 并确认。
+
+Windows PowerShell 中也可以使用类似命令：
+
+```powershell
+ssh-keygen -p -f $env:USERPROFILE\.ssh\id_ed25519
+```
+
+### 4. 使用 ssh-agent 减少重复输入
+
+设置 passphrase 后，每次使用私钥时都可能要求输入 passphrase。为了避免频繁输入，可以使用 `ssh-agent` 缓存解锁后的私钥。
+
+macOS 和 Linux 通常可以执行：
+
+```bash
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+```
+
+Windows PowerShell 可以先确认 `ssh-agent` 服务是否可用，然后添加私钥：
+
+```powershell
+Start-Service ssh-agent
+ssh-add $env:USERPROFILE\.ssh\id_ed25519
+```
+
+添加后，同一登录会话中再次 SSH 连接时，通常不需要反复输入 passphrase。
+
+### 5. passphrase 的取舍
+
+是否设置 passphrase，取决于使用场景。
+
+| 场景 | 建议 |
+|------|------|
+| 个人电脑登录重要服务器 | 建议设置 passphrase |
+| 私钥可能同步到多台设备 | 强烈建议设置 passphrase |
+| 自动化脚本、CI/CD 部署 | 需要谨慎评估，通常使用专用低权限密钥 |
+| 临时测试服务器 | 可按实际风险决定 |
+
+对于长期使用的云服务器，尤其是 root 用户登录密钥，建议设置 passphrase，并配合 ssh-agent 使用。
+
+---
+
+## 五、第三阶段：手动配置公钥到服务器
 
 很多教程会使用 `ssh-copy-id` 上传公钥，但在不少 Windows 环境中，尤其是 CMD 中，默认没有这个命令。
 
@@ -244,7 +343,7 @@ cat ~/.ssh/authorized_keys
 
 ---
 
-## 五、第四阶段：测试密钥登录
+## 六、第四阶段：测试密钥登录
 
 在关闭密码登录之前，必须先确认密钥登录已经可用。
 
@@ -267,7 +366,7 @@ ssh root@你的服务器IP
 
 ---
 
-## 六、常见认知误区
+## 七、常见认知误区
 
 在关闭密码登录之前，需要先理解 OpenSSH 配置中的几个常见误区。
 
@@ -338,7 +437,7 @@ chmod 600 ~/.ssh/authorized_keys
 
 ---
 
-## 七、第五阶段：关闭密码登录
+## 八、第五阶段：关闭密码登录
 
 确认密钥登录可以正常使用后，就可以关闭密码认证。
 
@@ -412,7 +511,7 @@ sudo systemctl reload ssh
 
 ---
 
-## 八、第六阶段：验证加固结果
+## 九、第六阶段：验证加固结果
 
 配置完成后，需要进行两项验证。
 
@@ -444,7 +543,7 @@ Permission denied (publickey).
 
 ---
 
-## 九、推荐配置模板
+## 十、推荐配置模板
 
 完成上述配置后，`/etc/ssh/sshd_config` 中与认证相关的核心配置可以参考如下模板。
 
@@ -481,7 +580,7 @@ sudo sshd -T | grep -E 'permitrootlogin|passwordauthentication|pubkeyauthenticat
 
 ---
 
-## 十、常见问题排查
+## 十一、常见问题排查
 
 ### 1. 为什么仍然提示输入密码
 
@@ -519,7 +618,27 @@ ls -la /etc/ssh/sshd_config.d/
 sudo sshd -T | grep -E 'permitrootlogin|passwordauthentication|pubkeyauthentication'
 ```
 
-### 3. 如果新窗口无法登录怎么办
+### 3. 设置 passphrase 后每次登录都要输入怎么办
+
+这是正常现象。passphrase 是用来解锁本地私钥的，不是服务器密码。
+
+如果不想每次都输入，可以使用 `ssh-agent` 缓存私钥：
+
+```bash
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+```
+
+Windows PowerShell 可以执行：
+
+```powershell
+Start-Service ssh-agent
+ssh-add $env:USERPROFILE\.ssh\id_ed25519
+```
+
+如果是自动化任务，不建议直接使用无保护的 root 私钥。更稳妥的做法是创建专用低权限用户和专用密钥，并限制其可执行操作范围。
+
+### 4. 如果新窗口无法登录怎么办
 
 不要关闭旧窗口。
 
