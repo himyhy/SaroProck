@@ -1,0 +1,566 @@
+---
+title: Linux 服务器 SSH 安全加固实战：从密码登录到纯密钥认证
+description: 面向 Linux 服务器新手的 SSH 安全加固指南，完整介绍如何从 Root 密码登录过渡到 SSH 密钥认证，并关闭密码登录以降低暴力破解风险。
+pubDate: 2026-07-18
+tags:
+  - Linux
+  - SSH
+  - 服务器安全
+  - 密钥认证
+  - 运维
+categories:
+  - 技术
+  - 服务器
+draft: false
+---
+
+## 前言
+
+SSH 是管理 Linux 服务器最常用的远程连接方式。对于刚购买的云服务器来说，很多用户会先使用 root 用户和密码登录，完成初始化配置。
+
+这种方式虽然方便，但安全性并不理想。公网服务器长期暴露在互联网中，经常会遭遇自动化扫描和密码暴力破解。如果仍然允许密码登录，一旦密码强度不足或被泄露，服务器就可能被直接接管。
+
+更安全的做法是：
+
+1. 临时允许密码登录，完成初始化配置
+2. 在本地生成 SSH 密钥对
+3. 将公钥写入服务器
+4. 确认密钥登录可用
+5. 关闭密码登录，只保留密钥认证
+
+本文将完整演示这一套流程，并重点说明新手最容易踩坑的权限配置、OpenSSH 默认值、配置检查和验证方法。
+
+---
+
+## 一、整体流程说明
+
+在开始修改配置之前，先明确目标。
+
+本文最终希望服务器达到以下状态：
+
+| 项目 | 目标状态 | 说明 |
+|------|------|------|
+| Root 登录 | 允许 | 便于直接管理服务器，后续也可改为普通用户登录 |
+| 密码登录 | 禁用 | 避免密码暴力破解 |
+| 公钥认证 | 启用 | 使用本地私钥登录服务器 |
+| SSH 配置变更方式 | 先检查，再重载 | 避免配置错误导致无法登录 |
+
+推荐执行顺序如下：
+
+1. 确认当前可以通过密码登录服务器
+2. 在本地电脑生成 SSH 密钥对
+3. 手动复制公钥到服务器
+4. 设置 `.ssh` 和 `authorized_keys` 的权限
+5. 新开终端测试密钥登录
+6. 确认密钥登录成功后，再关闭密码登录
+7. 使用命令验证密码登录确实被禁用
+
+---
+
+## 二、第一阶段：临时开启 Root 密码登录
+
+这一阶段适用于刚购买的云服务器，或者你需要先通过密码连接服务器进行初始化配置的场景。
+
+不同系统和云厂商的默认策略不完全一致。例如，一些 Ubuntu 镜像默认禁止 root 用户直接通过密码登录。因此，如果你需要临时开启 root 密码登录，可以按下面步骤操作。
+
+### 1. 编辑 SSH 配置文件
+
+使用 root 用户或具有 sudo 权限的用户登录服务器，编辑 OpenSSH 服务端配置文件：
+
+```bash
+sudo nano /etc/ssh/sshd_config
+```
+
+### 2. 修改 Root 登录和密码认证配置
+
+找到以下配置项，并改为：
+
+```text
+PermitRootLogin yes
+PasswordAuthentication yes
+```
+
+含义如下：
+
+| 配置项 | 作用 |
+|------|------|
+| `PermitRootLogin yes` | 允许 root 用户直接通过 SSH 登录 |
+| `PasswordAuthentication yes` | 允许使用密码进行 SSH 认证 |
+
+如果原文件中存在类似下面的注释行：
+
+```text
+#PermitRootLogin prohibit-password
+#PasswordAuthentication yes
+```
+
+可以在其下方新增显式配置，避免误读默认值。
+
+### 3. 检查配置并重启 SSH 服务
+
+修改完成后，先检查配置文件语法：
+
+```bash
+sudo sshd -t
+```
+
+如果没有任何输出，说明配置语法没有问题。
+
+然后重启 SSH 服务：
+
+```bash
+sudo systemctl restart sshd
+```
+
+部分发行版服务名可能是 `ssh`，如果 `sshd` 不存在，可以使用：
+
+```bash
+sudo systemctl restart ssh
+```
+
+此时，你应该可以使用 root 用户和密码连接服务器。
+
+---
+
+## 三、第二阶段：在本地生成 SSH 密钥对
+
+密码登录只能作为临时过渡方案。完成基础连接后，应尽快配置 SSH 密钥认证。
+
+需要注意：密钥对应该在本地电脑生成，而不是在服务器上生成。
+
+### 1. 生成 Ed25519 密钥对
+
+在本地电脑打开终端。
+
+Windows 用户可以使用 PowerShell，macOS 和 Linux 用户可以使用 Terminal。
+
+执行：
+
+```bash
+ssh-keygen -t ed25519 -C "my_server_key"
+```
+
+一路回车即可使用默认保存路径。
+
+默认会生成以下两个文件：
+
+```text
+~/.ssh/id_ed25519
+~/.ssh/id_ed25519.pub
+```
+
+### 2. 理解私钥和公钥
+
+| 文件 | 类型 | 是否可以公开 | 说明 |
+|------|------|------|------|
+| `id_ed25519` | 私钥 | 不可以 | 只能保存在本地电脑，不能发送给任何人 |
+| `id_ed25519.pub` | 公钥 | 可以 | 需要写入服务器的 `authorized_keys` 文件 |
+
+私钥相当于你的登录凭证，必须妥善保管。
+
+如果你希望进一步提高安全性，可以在生成密钥时设置 passphrase。这样即使私钥文件被复制，攻击者仍然需要额外的私钥密码才能使用。
+
+---
+
+## 四、第三阶段：手动配置公钥到服务器
+
+很多教程会使用 `ssh-copy-id` 上传公钥，但在不少 Windows 环境中，尤其是 CMD 中，默认没有这个命令。
+
+为了兼容 Windows、macOS 和 Linux，同时让你明确理解公钥的实际存放位置，本文使用手动复制粘贴法。
+
+### 1. 在本地查看公钥内容
+
+macOS 和 Linux 用户可以执行：
+
+```bash
+cat ~/.ssh/id_ed25519.pub
+```
+
+Windows PowerShell 用户可以执行：
+
+```powershell
+Get-Content ~/.ssh/id_ed25519.pub
+```
+
+也可以直接用记事本打开：
+
+```text
+C:\Users\你的用户名\.ssh\id_ed25519.pub
+```
+
+复制完整公钥内容。它通常以 `ssh-ed25519` 开头，末尾可能带有你设置的注释，例如：
+
+```text
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx my_server_key
+```
+
+复制时必须复制整行，不能只复制中间一部分。
+
+---
+
+### 2. 在服务器创建 `.ssh` 目录
+
+保持当前已经连接上的服务器 SSH 窗口，执行：
+
+```bash
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+```
+
+这里的权限非常重要。
+
+| 路径 | 推荐权限 | 说明 |
+|------|------|------|
+| `~/.ssh` | `700` | 只有当前用户可以读、写、进入 |
+| `~/.ssh/authorized_keys` | `600` | 只有当前用户可以读写 |
+
+如果权限过于开放，例如设置成 `777`，OpenSSH 可能会认为环境不安全，从而拒绝使用密钥登录。
+
+---
+
+### 3. 写入公钥到 `authorized_keys`
+
+将刚才复制的公钥追加到服务器的 `authorized_keys` 文件中。
+
+示例命令如下，请将引号中的内容替换为你的完整公钥：
+
+```bash
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx my_server_key" >> ~/.ssh/authorized_keys
+```
+
+然后设置文件权限：
+
+```bash
+chmod 600 ~/.ssh/authorized_keys
+```
+
+如果你不确定是否写入成功，可以查看文件内容：
+
+```bash
+cat ~/.ssh/authorized_keys
+```
+
+确认其中存在你刚刚添加的公钥。
+
+---
+
+## 五、第四阶段：测试密钥登录
+
+在关闭密码登录之前，必须先确认密钥登录已经可用。
+
+不要关闭当前已经连接的 SSH 窗口。保留这个窗口作为回退通道。
+
+在本地电脑新开一个终端，执行：
+
+```bash
+ssh root@你的服务器IP
+```
+
+如果配置成功，你会看到以下情况之一：
+
+1. 直接登录服务器
+2. 提示输入私钥 passphrase
+
+只要没有要求输入服务器 root 密码，就说明密钥登录已经生效。
+
+如果仍然提示输入服务器密码，说明密钥认证没有成功，需要先排查，不要继续关闭密码登录。
+
+---
+
+## 六、常见认知误区
+
+在关闭密码登录之前，需要先理解 OpenSSH 配置中的几个常见误区。
+
+### 误区一：注释掉就等于关闭
+
+在 `sshd_config` 中，很多配置项默认是注释状态，例如：
+
+```text
+#PubkeyAuthentication yes
+```
+
+这并不代表公钥认证被关闭。
+
+在 OpenSSH 中，注释通常表示使用默认值。而 `PubkeyAuthentication` 的默认值通常就是 `yes`。
+
+因此，下面两种写法在多数情况下效果一致：
+
+```text
+#PubkeyAuthentication yes
+```
+
+```text
+PubkeyAuthentication yes
+```
+
+如果你希望配置更清晰，也可以显式写出：
+
+```text
+PubkeyAuthentication yes
+```
+
+---
+
+### 误区二：关闭密码登录后就无法登录
+
+只要公钥已经正确写入服务器，并且密钥认证已经测试成功，关闭密码登录不会影响你通过私钥登录。
+
+关闭的是这种方式：
+
+```text
+用户输入服务器密码登录
+```
+
+保留的是这种方式：
+
+```text
+本地私钥 + 服务器公钥匹配登录
+```
+
+因此，真正安全的流程不是一上来就关闭密码，而是先验证密钥登录成功，再关闭密码登录。
+
+---
+
+### 误区三：权限不重要
+
+SSH 对权限非常敏感。
+
+如果 `.ssh` 目录或 `authorized_keys` 文件权限过于开放，即使公钥内容完全正确，OpenSSH 也可能拒绝密钥认证。
+
+建议始终执行：
+
+```bash
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+```
+
+这是排查密钥登录失败时最常见、也最容易忽略的问题。
+
+---
+
+## 七、第五阶段：关闭密码登录
+
+确认密钥登录可以正常使用后，就可以关闭密码认证。
+
+### 1. 保留当前 SSH 窗口
+
+在执行以下操作时，不要关闭当前已经连接的 SSH 会话。
+
+这是非常重要的安全原则。如果配置写错导致新连接失败，你仍然可以通过旧会话修改配置并恢复。
+
+### 2. 修改 SSH 配置文件
+
+在服务器上执行：
+
+```bash
+sudo nano /etc/ssh/sshd_config
+```
+
+将密码认证改为关闭：
+
+```text
+PasswordAuthentication no
+```
+
+同时建议显式保留公钥认证开启：
+
+```text
+PubkeyAuthentication yes
+```
+
+如果你仍然希望允许 root 使用密钥登录，可以保留：
+
+```text
+PermitRootLogin yes
+```
+
+如果后续希望进一步加固，可以创建普通用户，使用普通用户登录后再通过 `su` 或 `sudo` 提权。
+
+---
+
+### 3. 检查配置语法
+
+保存文件后，不要立刻重启服务。先执行：
+
+```bash
+sudo sshd -t
+```
+
+如果没有输出，说明配置语法正确。
+
+如果有报错，需要根据提示修复配置文件，不能继续重载服务。
+
+---
+
+### 4. 平滑重载 SSH 服务
+
+配置检查通过后，执行：
+
+```bash
+sudo systemctl reload sshd
+```
+
+如果系统服务名是 `ssh`，则执行：
+
+```bash
+sudo systemctl reload ssh
+```
+
+这里建议使用 `reload`，而不是直接 `restart`。
+
+`reload` 会重新加载配置，通常不会中断当前已连接的 SSH 会话，更适合远程修改 SSH 配置时使用。
+
+---
+
+## 八、第六阶段：验证加固结果
+
+配置完成后，需要进行两项验证。
+
+### 1. 验证密钥登录仍然可用
+
+在本地新开终端，执行：
+
+```bash
+ssh root@你的服务器IP
+```
+
+预期结果：可以正常登录服务器，并且不会提示输入服务器密码。
+
+### 2. 验证密码登录已经被禁用
+
+在本地执行以下命令，强制 SSH 客户端只使用密码认证，并禁用公钥认证：
+
+```bash
+ssh -o PreferredAuthentications=password -o PubkeyAuthentication=no root@你的服务器IP
+```
+
+预期结果：服务器拒绝登录，通常会看到类似提示：
+
+```text
+Permission denied (publickey).
+```
+
+如果仍然出现 `password:` 提示，说明密码认证没有被正确关闭，需要重新检查 `sshd_config`。
+
+---
+
+## 九、推荐配置模板
+
+完成上述配置后，`/etc/ssh/sshd_config` 中与认证相关的核心配置可以参考如下模板。
+
+```text
+# 允许 root 登录。后续也可以改为普通用户登录后再提权。
+PermitRootLogin yes
+
+# 禁用密码登录，降低暴力破解风险。
+PasswordAuthentication no
+
+# 启用公钥认证。该项默认通常就是 yes，显式写出更清晰。
+PubkeyAuthentication yes
+
+# 关闭不需要的认证方式。
+KerberosAuthentication no
+GSSAPIAuthentication no
+```
+
+需要注意：不同发行版、不同 OpenSSH 版本、不同云厂商镜像可能存在额外配置文件，例如：
+
+```text
+/etc/ssh/sshd_config.d/*.conf
+```
+
+如果主配置文件修改后没有生效，需要检查这些附加配置文件中是否存在覆盖项。
+
+可以使用以下命令辅助排查：
+
+```bash
+sudo sshd -T | grep -E 'permitrootlogin|passwordauthentication|pubkeyauthentication'
+```
+
+该命令会输出 OpenSSH 最终生效的配置值。
+
+---
+
+## 十、常见问题排查
+
+### 1. 为什么仍然提示输入密码
+
+可能原因包括：
+
+- 公钥没有正确写入 `~/.ssh/authorized_keys`
+- 公钥只复制了一部分，不是完整一行
+- `.ssh` 或 `authorized_keys` 权限不正确
+- 服务器登录用户不是你写入公钥的用户
+- SSH 服务没有重载配置
+
+建议依次检查：
+
+```bash
+cat ~/.ssh/authorized_keys
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+sudo sshd -t
+sudo systemctl reload sshd
+```
+
+### 2. 为什么修改了配置但没有生效
+
+可能是其他配置文件覆盖了主配置。
+
+检查目录：
+
+```bash
+ls -la /etc/ssh/sshd_config.d/
+```
+
+查看最终生效值：
+
+```bash
+sudo sshd -T | grep -E 'permitrootlogin|passwordauthentication|pubkeyauthentication'
+```
+
+### 3. 如果新窗口无法登录怎么办
+
+不要关闭旧窗口。
+
+在旧窗口中重新编辑配置：
+
+```bash
+sudo nano /etc/ssh/sshd_config
+```
+
+临时恢复：
+
+```text
+PasswordAuthentication yes
+```
+
+然后检查并重载：
+
+```bash
+sudo sshd -t
+sudo systemctl reload sshd
+```
+
+恢复连接后，再重新排查密钥配置问题。
+
+---
+
+## 总结
+
+SSH 安全加固的核心思路并不复杂：先保证自己能够通过密钥登录，再关闭密码登录。
+
+推荐的最小安全流程是：
+
+1. 本地生成 SSH 密钥对
+2. 将公钥写入服务器 `~/.ssh/authorized_keys`
+3. 设置正确权限：`.ssh` 为 `700`，`authorized_keys` 为 `600`
+4. 新开终端确认密钥登录成功
+5. 修改 `PasswordAuthentication no`
+6. 使用 `sudo sshd -t` 检查配置
+7. 使用 `sudo systemctl reload sshd` 平滑重载
+8. 强制密码认证测试，确认密码登录已被禁用
+
+完成这些步骤后，服务器将不再接受密码认证，可以有效降低公网暴力破解风险。
+
+对于个人服务器和小型项目来说，这是非常值得优先完成的一项基础安全配置。
